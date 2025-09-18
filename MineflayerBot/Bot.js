@@ -2,6 +2,7 @@ const Nick = require("./System/GetNickName");
 const Send = require("./System/Send");
 const Type = require('./System/GetTypeChat');
 const Text = require('./System/GetText');
+const AI = require('./AI');
 
 let HttpsProxyAgent;
 let agent;
@@ -24,6 +25,7 @@ class Bot {
         this.send = new Send();
         this.getType = new Type();
         this.getText = new Text();
+        this.ai = new AI();
     }
     
     async MessageHandler(message, bot, botInfo, json) {
@@ -36,6 +38,15 @@ class Bot {
             
             if (nick !== "none" && typeChat !== "none") {
                 this.send.SendMessage(typeChat, 'Этот бот создан с помощью BotMine!', nick, bot);
+            }
+        }
+        
+        if (botInfo.activatedPlugins.includes('AiAssistant'))
+        {
+            if (text.startsWith(botInfo.nick) || text.startsWith("бот")) {
+                if (botInfo.pluginSettings.AiAssistant.key.value !== "") 
+                    this.send.SendMessage(this.getType.getType(message), await this.ai.NewQuestion(text, this.getNick.getNick(message, json), botInfo.pluginSettings.AiAssistant.promt.value, botInfo.pluginSettings.AiAssistant.key.value), this.getNick.getNick(message, json), bot);
+                console.log('I see..')
             }
         }
 

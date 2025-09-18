@@ -1,10 +1,11 @@
 {
   "name": "botmine",
-  "version": "1.1.6",
+  "version": "1.1.7",
   "description": "",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "postinstall": "patch-package"
   },
   "bin": {
     "botmine": "./server.js"
@@ -13,8 +14,9 @@
   "dependencies": {
     "express": "^5.1.0",
     "https-proxy-agent": "^7.0.6",
-    "mineflayer": "^4.8.1",
+    "mineflayer": "^4.25.0",
     "node-fetch": "^3.3.2",
+    "patch-package": "^8.0.0",
     "ws": "^8.18.3"
   }
 }
