@@ -3,7 +3,6 @@ const Send = require("./System/Send");
 const Type = require('./System/GetTypeChat');
 const Text = require('./System/GetText');
 
-let fetch;
 let HttpsProxyAgent;
 let agent;
 
@@ -17,17 +16,7 @@ function escapeDiscordMarkdown(text) {
     return text.replace(/([\\`*_{}\[\]()#+\-.!>])/g, "\\$1");
 }
 
-async function ensureFetch() {
-    if (!fetch) {
-        const nodeFetchModule = await import("node-fetch");
-        fetch = nodeFetchModule.default;
-
-        const httpsProxyAgentModule = await import("https-proxy-agent");
-        HttpsProxyAgent = httpsProxyAgentModule.HttpsProxyAgent;
-
-        agent = new HttpsProxyAgent(`http://${PROXY_HOST}:${PROXY_PORT}`);
-    }
-}
+const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 
 class Bot {
     constructor() {
@@ -40,6 +29,15 @@ class Bot {
     async MessageHandler(message, bot, botInfo, json) {
         let isRegister = false;
         const text = this.getText.getText(message).trim();
+        
+        if (message.includes("@dev")) {
+            let nick = this.getNick.getNick(message, json);
+            let typeChat = this.getType.getType(message);
+            
+            if (nick !== "none" && typeChat !== "none") {
+                this.send.SendMessage(typeChat, 'Этот бот создан с помощью BotMine!', nick, bot);
+            }
+        }
 
         if (botInfo.activatedPlugins.includes('Autojoin')) {
             if (message.includes(botInfo.nick + ' зашел на сервер')) {
@@ -62,16 +60,20 @@ class Bot {
         if (botInfo.activatedPlugins.includes('Pinger')) {
             if (message.includes(botInfo.nick)) {
                 if (botInfo.pluginSettings.Pinger.token.value !== "" && botInfo.pluginSettings.Pinger.id.value !== "") {
-                    await fetch(`https://api.telegram.org/bot${botInfo.pluginSettings.Pinger.token.value}/sendMessage?chat_id=${botInfo.pluginSettings.Pinger.id.value}&text=Пинг! Сообщение: ${message}`)
-                        .then(res => res.json())
-                        .then(data => {
+                    if (this.getNick.getNick(message, json) !== botInfo.nick && this.getNick.getNick(message, json) !== "none") {
+                        try {
+                            const response = await fetch(`https://api.telegram.org/bot${botInfo.pluginSettings.Pinger.token.value}/sendMessage?chat_id=${botInfo.pluginSettings.Pinger.id.value}&text=🔔 Пинг! Сообщение: \n${message}`);
+                            const data = await response.json();
+
                             if (data.ok) {
                                 console.log("Сообщение отправлено:", data.result.text);
                             } else {
                                 console.error("Ошибка Telegram:", data);
                             }
-                        })
-                        .catch(err => console.error("Ошибка запроса:", err));
+                        } catch (err) {
+                            console.error("Ошибка запроса:", err);
+                        }
+                    }
                 }
             }
         }
@@ -130,12 +132,12 @@ class Bot {
                             if (messageText.includes("Установлен режим")) {
                                 bot.removeListener('message', listener); // Убираем слушателя, чтобы он не сработал снова
                                 setTimeout(() => {
-                                    this.send.SendMessage(this.getType.getType(message), botInfo.pluginSettings.Fly.successMessage.value, nickName, bot);
+                                    this.send.SendMessage(typeChat, botInfo.pluginSettings.Fly.successMessage.value, nickName, bot);
                                 }, 1000)
                             } else if (messageText.includes("Эта команда будет доступна")) {
                                 bot.removeListener('message', listener);
                                 setTimeout(() => {
-                                    this.send.SendMessage(this.getType.getType(message), `Подождите! У меня кд на команду! Попробуй через ` + messageText.split("через")[1], nickName, bot);
+                                    this.send.SendMessage(typeChat, `Подождите! У меня кд на команду! Попробуй через ` + messageText.split("через")[1], nickName, bot);
                                 }, 1000)
                             }
                         };
@@ -155,8 +157,6 @@ class Bot {
                 const type = this.getType.getType(message);
                 const nick = this.getNick.getNick(message, json);
 
-                //console.log(nick, type);
-
                 if (type === "none" || nick === "none") return;
                 if (type !== "local" && type !== "global") return;
 
@@ -169,11 +169,11 @@ class Bot {
                 if (discordMessages.length >= 5) {
                     const messagesToSend = [...discordMessages];
                     discordMessages.length = 0;
-
+                    
                     const payload = {content: messagesToSend.join("\n")};
 
                     try {
-                        fetch(botInfo.pluginSettings.Synch.webhook.value, {
+                        await fetch(botInfo.pluginSettings.Synch.webhook.value, {
                             method: "POST",
                             headers: {"Content-Type": "application/json"},
                             body: JSON.stringify(payload),
@@ -181,7 +181,7 @@ class Bot {
                             signal: AbortSignal.timeout(30000),
                         });
                     } catch (err) {
-
+                        console.log(err);
                     }
                 }
             }
