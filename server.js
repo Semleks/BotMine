@@ -1,5 +1,7 @@
+#!/usr/bin/env node
+
 const express = require("express");
-const { WebSocketServer } = require("ws");
+const {WebSocketServer} = require("ws");
 const mineflayer = require("mineflayer");
 const path = require("path");
 const fs = require("fs");
@@ -15,7 +17,7 @@ let myBot = {
 }
 
 const app = express();
-const wss = new WebSocketServer({ port: 3001 });
+const wss = new WebSocketServer({port: 3001});
 let bot = null; // Глобальная переменная для экземпляра бота
 
 // Определение пути к файлу конфигурации
@@ -40,8 +42,8 @@ async function startPeriodicMessages(bot) {
         await delay(TWO_MINUTES);
 
         try {
-            if (myBot.pluginSettings.Messages.message.value !== "") 
-               bot.chat("!" + myBot.pluginSettings.Messages.message.value);
+            if (myBot.pluginSettings.Messages.message.value !== "")
+                bot.chat("!" + myBot.pluginSettings.Messages.message.value);
         } catch (e) {
             console.error('>>> Ошибка при отправке периодического сообщения:', e);
         }
@@ -51,34 +53,43 @@ async function startPeriodicMessages(bot) {
 // Создание директории, если она не существует
 const dir = path.dirname(filePath);
 if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
+    fs.mkdirSync(dir, {recursive: true});
 }
 
 // Определяем настройки по умолчанию для каждого плагина.
 // Это позволяет автоматически создавать структуру настроек при активации плагина.
 const defaultPluginSettings = {
     "Autojoin": {
-        "serverNumber": { "label": "Номер режима для входа", "value": "" }
+        "serverNumber": {"label": "Номер режима для входа", "value": ""}
     },
     "Hi": {
-      "message": {"label": "Введите сообщение", "value": "Привет, botmine!"}  
+        "message": {"label": "Введите сообщение", "value": "Привет, botmine!"}
     },
     "Bye": {
-      "message": {"label": "Введите сообщение", "value": "Пока!"}  
+        "message": {"label": "Введите сообщение", "value": "Пока!"}
     },
     "Pinger": {
         "token": {"label": "Введите токен бота (@botfather)", "value": ""},
         "id": {"label": "Введите ID группы", "value": ""}
     },
     "Invite": {
-        "successMessage": {"label": "Сообщения, после успешного приглашения в клан.", "value": "Отправил! Прими приглашение в клан."}
+        "successMessage": {
+            "label": "Сообщения, после успешного приглашения в клан.",
+            "value": "Отправил! Прими приглашение в клан."
+        }
     },
     "Fly": {
-        "successMessage": {"label": "Сообщения, после успешной выдачи флая.", "value": "Успешно установил вам режим полета! Удачи!"}
+        "successMessage": {
+            "label": "Сообщения, после успешной выдачи флая.",
+            "value": "Успешно установил вам режим полета! Удачи!"
+        }
     },
     "Messages": {
         "message": {"label": "Введите рекламное сообщение.", "value": ""}
-    }
+    },
+    "Synch": {
+        "webhook": {"label": "Введите вебхук из дс.", "value": ""}
+    },
 };
 
 function loadBotData() {
@@ -109,8 +120,8 @@ function saveBotData() {
     try {
         fs.writeFileSync(filePath, JSON.stringify(myBot, null, 4));
         console.log('Файл main.json обновлен.');
-        
-        const updatedData = JSON.stringify({ type: "botInfo", data: myBot });
+
+        const updatedData = JSON.stringify({type: "botInfo", data: myBot});
         wss.clients.forEach(client => {
             if (client.readyState === client.OPEN) {
                 client.send(updatedData);
@@ -128,8 +139,8 @@ loadBotData();
 wss.on("connection", (ws) => {
     console.log("Клиент подключен к WebSocket");
 
-    const minecraftBot = new Bot(); 
-    
+    const minecraftBot = new Bot();
+
     ws.send(JSON.stringify({
         type: "botInfo",
         data: myBot
@@ -141,7 +152,7 @@ wss.on("connection", (ws) => {
         switch (data.type) {
             // Сохранение настроек плагина
             case "savePluginSettings": {
-                const { pluginName, settings } = data;
+                const {pluginName, settings} = data;
                 if (myBot.pluginSettings[pluginName]) {
                     // Обновляем значения настроек
                     for (const key in settings) {
@@ -157,7 +168,7 @@ wss.on("connection", (ws) => {
 
             // Включение/отключение плагина
             case "togglePlugin": {
-                const { pluginName } = data;
+                const {pluginName} = data;
                 const pluginIndex = myBot.activatedPlugins.indexOf(pluginName);
 
                 if (pluginIndex > -1) { // Если плагин был активен -> отключаем
@@ -207,7 +218,7 @@ wss.on("connection", (ws) => {
                     auth: 'offline',
                     version: '1.16.5'
                 });
-                
+
                 startPeriodicMessages(bot)
 
                 // Обработчики событий Mineflayer
@@ -230,12 +241,12 @@ wss.on("connection", (ws) => {
                 });
 
                 bot.on('message', (jsonMsg) => {
-                    const text = jsonMsg.toString().trim();
-                    
+                    const text = jsonMsg.toString();
+
                     if (text) {
                         // Отправляем сообщение из чата игры в веб-интерфейс
-                        ws.send(JSON.stringify({ type: "chat", message: text }));
-                        
+                        ws.send(JSON.stringify({type: "chat", message: text}));
+
                         minecraftBot.MessageHandler(text, bot, myBot, jsonMsg);
                     }
                 });
@@ -252,20 +263,20 @@ wss.on("connection", (ws) => {
                 }
                 break;
             }
-            
+
             case "createBot": {
                 if (bot) {
                     bot.end();
                     bot = null;
                 }
-                
+
                 myBot.nick = data.username;
                 myBot.password = data.password;
                 myBot.server = data.host;
 
                 log("status", "Данные бота сохранены. Запускаем...", ws);
                 saveBotData();
-                
+
                 // Автоматически запускаем бота с новыми данными
                 // Чтобы не дублировать код, можно отправить "внутреннее" сообщение startBot
                 ws.emit('message', JSON.stringify({type: 'startBot'}));
@@ -287,6 +298,6 @@ app.listen(3000, () => {
 
 function log(type, message, ws) {
     if (ws.readyState === ws.OPEN) {
-        ws.send(JSON.stringify({ type: type, message: message }));
+        ws.send(JSON.stringify({type: type, message: message}));
     }
 }

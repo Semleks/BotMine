@@ -2,14 +2,13 @@ class GetTypeChat {
     getType(text)
     {
         try {
-            // Небольшое улучшение: приведем текст к нижнему регистру для надежности
             const lowerCaseText = text.toLowerCase();
 
             if (lowerCaseText.includes("->") && lowerCaseText.includes("я"))
                 return "private";
-            if (text.includes("[ɢ]")) // Здесь регистр может быть важен
+            if (text.includes("[ɢ]")) 
                 return "global";
-            if (text.includes("[ʟ]")) // И здесь
+            if (text.includes("[ʟ]"))
                 return "local";
             if (lowerCaseText.includes("клан"))
                 return 'clan';

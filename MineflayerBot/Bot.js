@@ -3,6 +3,32 @@ const Send = require("./System/Send");
 const Type = require('./System/GetTypeChat');
 const Text = require('./System/GetText');
 
+let fetch;
+let HttpsProxyAgent;
+let agent;
+
+const PROXY_HOST = "127.0.0.1";
+const PROXY_PORT = 2081;
+
+const discordMessages = [];
+
+function escapeDiscordMarkdown(text) {
+    if (!text) return "";
+    return text.replace(/([\\`*_{}\[\]()#+\-.!>])/g, "\\$1");
+}
+
+async function ensureFetch() {
+    if (!fetch) {
+        const nodeFetchModule = await import("node-fetch");
+        fetch = nodeFetchModule.default;
+
+        const httpsProxyAgentModule = await import("https-proxy-agent");
+        HttpsProxyAgent = httpsProxyAgentModule.HttpsProxyAgent;
+
+        agent = new HttpsProxyAgent(`http://${PROXY_HOST}:${PROXY_PORT}`);
+    }
+}
+
 class Bot {
     constructor() {
         this.getNick = new Nick();
@@ -10,11 +36,11 @@ class Bot {
         this.getType = new Type();
         this.getText = new Text();
     }
-    MessageHandler(message, bot, botInfo, json)
-    {
+    
+    async MessageHandler(message, bot, botInfo, json) {
         let isRegister = false;
         const text = this.getText.getText(message).trim();
-     
+
         if (botInfo.activatedPlugins.includes('Autojoin')) {
             if (message.includes(botInfo.nick + ' зашел на сервер')) {
                 this.send.SendMessage('cmd', '/surv' + botInfo.pluginSettings.Autojoin.serverNumber.value, '', bot);
@@ -36,17 +62,7 @@ class Bot {
         if (botInfo.activatedPlugins.includes('Pinger')) {
             if (message.includes(botInfo.nick)) {
                 if (botInfo.pluginSettings.Pinger.token.value !== "" && botInfo.pluginSettings.Pinger.id.value !== "") {
-                    fetch(`https://api.telegram.org/bot${botInfo.pluginSettings.Pinger.token.value}/sendMessage`, {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json"
-                        },
-                        body: JSON.stringify({
-                            chat_id: botInfo.pluginSettings.Pinger.id.value,
-                            text: `🔔 Пинг! Сообщение: ${message}`,
-                            parse_mode: "HTML"
-                        })
-                    })
+                    await fetch(`https://api.telegram.org/bot${botInfo.pluginSettings.Pinger.token.value}/sendMessage?chat_id=${botInfo.pluginSettings.Pinger.id.value}&text=Пинг! Сообщение: ${message}`)
                         .then(res => res.json())
                         .then(data => {
                             if (data.ok) {
@@ -59,9 +75,10 @@ class Bot {
                 }
             }
         }
-        
+
         if (botInfo.activatedPlugins.includes("Invite")) {
             if (text.startsWith("@invite")) {
+                console.log("Yes.")
                 let typeChat = this.getType.getType(message);
                 let nickName = this.getNick.getNick(message, json);
                 this.send.SendMessage('cmd', '/clan invite ' + nickName, '', bot);
@@ -100,7 +117,7 @@ class Bot {
                 let typeChat = this.getType.getType(message);
                 let nickName = this.getNick.getNick(message, json);
                 this.send.SendMessage('cmd', '/fly ' + nickName, '', bot);
-                
+
                 try {
                     console.log(">>> [FlyCommand] Жду ответа от сервера (тайм-аут 5 секунд)...");
 
@@ -132,14 +149,51 @@ class Bot {
                 }
             }
         }
-        
+
+        if (botInfo.activatedPlugins.includes("Synch")) {
+            if (botInfo.pluginSettings.Synch.webhook.value !== "") {
+                const type = this.getType.getType(message);
+                const nick = this.getNick.getNick(message, json);
+
+                //console.log(nick, type);
+
+                if (type === "none" || nick === "none") return;
+                if (type !== "local" && type !== "global") return;
+
+                const safeNick = escapeDiscordMarkdown(nick);
+                const safeMessage = escapeDiscordMarkdown(message.split("⇨")[1]);
+
+                const formattedMessage = `${type}: ${safeNick}: ${safeMessage}`;
+                discordMessages.push(formattedMessage);
+
+                if (discordMessages.length >= 5) {
+                    const messagesToSend = [...discordMessages];
+                    discordMessages.length = 0;
+
+                    const payload = {content: messagesToSend.join("\n")};
+
+                    try {
+                        fetch(botInfo.pluginSettings.Synch.webhook.value, {
+                            method: "POST",
+                            headers: {"Content-Type": "application/json"},
+                            body: JSON.stringify(payload),
+                            agent: agent,
+                            signal: AbortSignal.timeout(30000),
+                        });
+                    } catch (err) {
+
+                    }
+                }
+            }
+        }
+
         if (message.includes('/login')) {
             if (botInfo.password === "") {
                 console.log('У вас не указан логин! Введите его вручную!')
             } else {
                 if (isRegister)
                     return;
-                
+
                 bot.chat('/login ' + botInfo.password);
                 isRegister = true;
             }
@@ -149,7 +203,7 @@ class Bot {
             if (botInfo.password === "") {
                 console.log('У вас не указан логин! Введите его вручную!')
             } else {
-                if (isRegister) 
+                if (isRegister)
                     return;
                 bot.chat('/reg ' + botInfo.password + ' ' + botInfo.password);
                 isRegister = true;
