@@ -1,5 +1,27 @@
 #!/usr/bin/env node
 
+process.on('uncaughtException', (err) => {
+    // Проверяем, что это именно та ошибка, которую мы ожидаем:
+    // 1. Это SyntaxError.
+    // 2. В стеке вызовов упоминается mineflayer (это делает проверку надежнее).
+    // 3. Сообщение содержит "JSON", что указывает на ошибку парсинга.
+    if (err instanceof SyntaxError && err.stack.includes('mineflayer') && err.message.includes('JSON')) {
+
+        // Выводим в консоль предупреждение, чтобы было понятно, что произошло
+        console.warn('--- [Botmine] Перехвачена ошибка парсинга скина игрока. ---');
+        console.warn('Это известная проблема при работе с некоторыми серверами (например, с SkinRestorer).');
+        console.warn('Ошибка безопасно проигнорирована. Бот продолжает работу.');
+
+    } else {
+        // Если это любая ДРУГАЯ непредвиденная ошибка, мы не хотим ее игнорировать.
+        // Это может привести к нестабильной работе. Поэтому мы выводим ошибку
+        // и завершаем работу, как это сделал бы Node.js по умолчанию.
+        console.error('--- [Botmine] Произошла критическая неперехваченная ошибка! ---');
+        console.error(err);
+        process.exit(1); // Выход с кодом ошибки
+    }
+});
+
 const express = require("express");
 const {WebSocketServer} = require("ws");
 const mineflayer = require("mineflayer");
@@ -35,17 +57,22 @@ function delay(ms) {
 }
 
 async function startPeriodicMessages(bot) {
-    console.log('>>> [Таймер] Запущена отправка периодических сообщений.');
+    console.log('[LOG] >>> [Таймер] Запущена отправка периодических сообщений.');
     const TWO_MINUTES = 2 * 60 * 1000;
 
     while (true) {
         await delay(TWO_MINUTES);
-
+        if (!bot) { // Если бота остановили, прекращаем цикл
+            console.log('[LOG] >>> [Таймер] Бот остановлен, периодические сообщения прекращены.');
+            break;
+        }
         try {
-            if (myBot.pluginSettings.Messages.message.value !== "")
+            if (myBot.pluginSettings.Messages && myBot.pluginSettings.Messages.message.value !== "") {
+                console.log('[LOG] >>> [Таймер] Отправляю периодическое сообщение.');
                 bot.chat("!" + myBot.pluginSettings.Messages.message.value);
+            }
         } catch (e) {
-            console.error('>>> Ошибка при отправке периодического сообщения:', e);
+            console.error('[LOG] >>> Ошибка при отправке периодического сообщения:', e);
         }
     }
 }
@@ -93,16 +120,20 @@ const defaultPluginSettings = {
     "AiAssistant": {
         "key": {"label": "Введите API ключ (gemini)", "value": ""},
         "promt": {"label": "Введите промт для Нейросети", "value": "Привет! Ты - игрок майнкрафта. Постарайся ответить на вопрос игрока с юмором. Не используй эмодзи и стикеры! Ответь ОЧЕНЬ КРАТКО. Максимум - 60 слов. Не используй перенос на новую строку!"}
+    },
+    "AntiTp": {
+        "warp": {"label": "Команда, которую бот пропишет при перемещении", "value": ""}
     }
 };
 
 function loadBotData() {
+    console.log('[LOG] Загрузка данных бота из файла...');
     if (fs.existsSync(filePath)) {
         try {
             const rawData = fs.readFileSync(filePath, 'utf-8');
             if (rawData) {
                 const jsonData = JSON.parse(rawData);
-                console.log('Содержимое main.json загружено:', jsonData);
+                console.log('[LOG] Содержимое main.json успешно загружено:', jsonData);
 
                 myBot.nick = jsonData.nick || "";
                 myBot.password = jsonData.password || "";
@@ -110,20 +141,20 @@ function loadBotData() {
                 myBot.activatedPlugins = Array.isArray(jsonData.activatedPlugins) ? jsonData.activatedPlugins : [];
                 myBot.pluginSettings = jsonData.pluginSettings || {};
             } else {
-                console.log("Файл main.json пуст.");
+                console.log("[LOG] Файл main.json пуст.");
             }
         } catch (err) {
-            console.error("Ошибка чтения или парсинга main.json:", err);
+            console.error("[LOG] Ошибка чтения или парсинга main.json:", err);
         }
     } else {
-        console.log("Файл main.json не найден. Он будет создан автоматически.");
+        console.log("[LOG] Файл main.json не найден. Он будет создан автоматически.");
     }
 }
 
 function saveBotData() {
     try {
         fs.writeFileSync(filePath, JSON.stringify(myBot, null, 4));
-        console.log('Файл main.json обновлен.');
+        console.log('[LOG] Файл main.json обновлен.');
 
         const updatedData = JSON.stringify({type: "botInfo", data: myBot});
         wss.clients.forEach(client => {
@@ -132,7 +163,7 @@ function saveBotData() {
             }
         });
     } catch (err) {
-        console.error("Ошибка записи в main.json:", err);
+        console.error("[LOG] Ошибка записи в main.json:", err);
     }
 }
 
@@ -141,7 +172,7 @@ loadBotData();
 
 // --- Логика WebSocket сервера ---
 wss.on("connection", (ws) => {
-    console.log("Клиент подключен к WebSocket");
+    console.log("[LOG] Клиент подключен к WebSocket");
 
     const minecraftBot = new Bot();
 
@@ -152,6 +183,7 @@ wss.on("connection", (ws) => {
 
     ws.on("message", (msg) => {
         const data = JSON.parse(msg.toString());
+        console.log(`[LOG] Получено сообщение от клиента WebSocket: тип "${data.type}"`);
 
         switch (data.type) {
             // Сохранение настроек плагина
@@ -194,27 +226,35 @@ wss.on("connection", (ws) => {
             case "stopBot": {
                 if (bot) {
                     log("status", "Выключаю бота...", ws);
+                    console.log("[LOG] Получена команда на остановку бота. Вызываем bot.end()");
                     bot.end();
                     bot = null;
                 } else {
                     log("status", "Бот и так не запущен.", ws);
+                    console.log("[LOG] Получена команда на остановку, но бот не был запущен.");
                 }
                 break;
             }
 
             // Запуск бота
             case "startBot": {
-                if (bot) { // Если бот уже запущен, перезапускаем его
-                    bot.end();
+                if (bot) {
+                    log("status", "Бот уже запущен, перезапускаем...", ws);
+                    console.log("[LOG] Перезапуск бота: сначала останавливаем старый экземпляр.");
+                    bot.end(); // bot.end() вызовет событие 'end'
                     bot = null;
                 }
 
+                minecraftBot.startCommitWatcher(bot, "Semleks", "Botmine", "main");
+
                 if (!myBot.server || !myBot.nick) {
                     log("status", "Ошибка: Ник или сервер не указаны. Создайте бота.", ws);
+                    console.error("[LOG] Ошибка запуска: ник или сервер не указаны.");
                     return;
                 }
 
                 log("status", `Подключение к серверу ${myBot.server} с ником ${myBot.nick}...`, ws);
+                console.log(`[LOG] Создание нового экземпляра бота mineflayer. Хост: ${myBot.server}, Ник: ${myBot.nick}`);
 
                 bot = mineflayer.createBot({
                     host: myBot.server,
@@ -223,46 +263,62 @@ wss.on("connection", (ws) => {
                     version: '1.16.5'
                 });
 
-                startPeriodicMessages(bot)
+                console.log('[LOG] Экземпляр бота создан. Начинаем установку обработчиков событий.');
 
-                // Обработчики событий Mineflayer
-                bot.once('spawn', () => {
-                    log("status", "Бот успешно заспавнился в мире.", ws);
+                // Обработчик события 'spawn' - ключевой для переподключения к чату
+                bot.on('spawn', () => {
+                    log("status", "Событие SPAWN: бот заспавнился в мире.", ws);
+                    console.log("=====================================================");
+                    console.log("[LOG] [EVENT] ---> 'spawn' <--- Бот заспавнился. Мир может быть новым.");
+                    console.log("[LOG] Переустанавливаем обработчик сообщений, чтобы точно их получать.");
+
+                    // Сначала удаляем ВСЕ предыдущие слушатели 'message', чтобы избежать дублей
+
+                    // Теперь добавляем единственный, свежий слушатель
+                    console.log("[LOG] Новый слушатель 'message' успешно установлен.");
+                    console.log("=====================================================");
+                });
+
+                bot.on('message', (jsonMsg) => {
+                    const text = jsonMsg.toString();
+                   // console.log(`[LOG] [EVENT] 'message': Получено сообщение из чата: "${text}"`);
+
+                    if (text) {
+                        // Отправляем сообщение из чата игры в веб-интерфейс
+                        ws.send(JSON.stringify({type: "chat", message: text}));
+                        minecraftBot.MessageHandler(text, bot, myBot, jsonMsg);
+                    }
                 });
 
                 bot.on('end', (reason) => {
                     log("status", "Соединение завершено. Причина: " + reason, ws);
+                    console.log(`[LOG] [EVENT] 'end'. Причина: ${reason}. Устанавливаем bot = null.`);
                     bot = null;
                 });
 
                 bot.on('error', (err) => {
                     log("status", ">>> Ошибка подключения: " + err.message, ws);
-                    console.error("Mineflayer error:", err);
+                    console.error("[LOG] [EVENT] 'error':", err);
                 });
 
                 bot.on('kicked', (reason) => {
                     log("status", "Кикнут с сервера: " + reason, ws);
+                    console.log(`[LOG] [EVENT] 'kicked'. Причина: ${reason}`);
                 });
 
-                bot.on('message', (jsonMsg) => {
-                    const text = jsonMsg.toString();
-
-                    if (text) {
-                        // Отправляем сообщение из чата игры в веб-интерфейс
-                        ws.send(JSON.stringify({type: "chat", message: text}));
-
-                        minecraftBot.MessageHandler(text, bot, myBot, jsonMsg);
-                    }
-                });
+                // Запускаем периодические сообщения только после создания бота
+                startPeriodicMessages(bot);
                 break;
             }
 
             // Отправка сообщения в игровой чат
             case "sendMessage": {
                 if (bot && bot.entity) {
+                    console.log(`[LOG] Отправка сообщения в чат от пользователя: "${data.message}"`);
                     bot.chat(data.message);
                     log("status", "Сообщение отправлено: " + data.message, ws);
                 } else {
+                    console.log("[LOG] Не могу отправить сообщение, бот не запущен или не в мире.");
                     log("status", "Не могу отправить сообщение, бот не запущен.", ws);
                 }
                 break;
@@ -270,6 +326,7 @@ wss.on("connection", (ws) => {
 
             case "createBot": {
                 if (bot) {
+                    console.log("[LOG] Создание нового бота: останавливаем старый экземпляр.");
                     bot.end();
                     bot = null;
                 }
@@ -279,10 +336,11 @@ wss.on("connection", (ws) => {
                 myBot.server = data.host;
 
                 log("status", "Данные бота сохранены. Запускаем...", ws);
+                console.log("[LOG] Данные бота обновлены. Nick:", myBot.nick, "Server:", myBot.server);
                 saveBotData();
 
                 // Автоматически запускаем бота с новыми данными
-                // Чтобы не дублировать код, можно отправить "внутреннее" сообщение startBot
+                console.log("[LOG] Автоматический запуск бота после создания.");
                 ws.emit('message', JSON.stringify({type: 'startBot'}));
                 break;
             }
@@ -290,7 +348,7 @@ wss.on("connection", (ws) => {
     });
 
     ws.on('close', () => {
-        console.log('Клиент отключился');
+        console.log('[LOG] Клиент WebSocket отключился');
     });
 });
 
