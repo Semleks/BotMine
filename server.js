@@ -245,8 +245,6 @@ wss.on("connection", (ws) => {
                     bot = null;
                 }
 
-                minecraftBot.startCommitWatcher(bot, "Semleks", "Botmine", "main");
-
                 if (!myBot.server || !myBot.nick) {
                     log("status", "Ошибка: Ник или сервер не указаны. Создайте бота.", ws);
                     console.error("[LOG] Ошибка запуска: ник или сервер не указаны.");
@@ -264,6 +262,8 @@ wss.on("connection", (ws) => {
                 });
 
                 console.log('[LOG] Экземпляр бота создан. Начинаем установку обработчиков событий.');
+
+                minecraftBot.startCommitWatcher(bot, "Semleks", "Botmine", "main");
 
                 // Обработчик события 'spawn' - ключевой для переподключения к чату
                 bot.on('spawn', () => {
