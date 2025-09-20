@@ -70,7 +70,7 @@ function start(bot, settings, botAPI) {
         clearInterval(timer);
     }
 
-    const intervalMs = (settings.interval || 5) * 60 * 1000;
+    const intervalMs = (settings.interval || 1) * 60 * 1000;
 
     // Вызываем проверку сразу, не дожидаясь первого интервала
     checkCommits(bot, settings, botAPI);
