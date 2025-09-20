@@ -4,8 +4,7 @@
   "description": "",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
-    "postinstall": "patch-package"
+    "start": "node server.js"
   },
   "bin": {
     "botmine": "./server.js"

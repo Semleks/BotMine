@@ -1,0 +1,10 @@
+{
+  "name": "Synch",
+  "description": "Дублирует сообщения из игрового чата в Discord по вебхуку.",
+  "defaultSettings": {
+    "webhook": {
+      "label": "URL вебхука из Discord",
+      "value": ""
+    }
+  }
+}

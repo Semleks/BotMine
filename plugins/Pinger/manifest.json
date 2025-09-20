@@ -1,0 +1,14 @@
+{
+  "name": "Pinger",
+  "description": "Отправляет уведомления в Telegram при упоминании ника бота в чате.",
+  "defaultSettings": {
+    "token": {
+      "label": "Токен Telegram бота (от @BotFather)",
+      "value": ""
+    },
+    "id": {
+      "label": "ID чата/группы для отправки уведомлений",
+      "value": ""
+    }
+  }
+}

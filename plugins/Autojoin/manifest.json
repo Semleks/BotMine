@@ -1,0 +1,10 @@
+{
+  "name": "Autojoin",
+  "description": "Автоматически заходит на указанный режим после входа на сервер.",
+  "defaultSettings": {
+    "serverNumber": {
+      "label": "Команда для входа на режим (например, /surv1)",
+      "value": "/surv1"
+    }
+  }
+}

@@ -2,13 +2,8 @@ const Nick = require("./System/GetNickName");
 const Send = require("./System/Send");
 const Type = require('./System/GetTypeChat');
 const Text = require('./System/GetText');
-const AI = require('./AI');
 
-let HttpsProxyAgent;
 let agent;
-
-const PROXY_HOST = "127.0.0.1";
-const PROXY_PORT = 2081;
 
 const discordMessages = [];
 

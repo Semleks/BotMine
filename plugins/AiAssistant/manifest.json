@@ -1,0 +1,14 @@
+{
+  "name": "AiAssistant",
+  "description": "Нейросеть отвечает пользователям по API Gemini.",
+  "defaultSettings": {
+    "key": {
+      "label": "API ключ от Google AI Studio (Gemini)",
+      "value": ""
+    },
+    "promt": {
+      "label": "Системный промпт для нейросети",
+      "value": "Ты - игрок майнкрафта по имени BotMine. Отвечай на вопросы кратко (максимум 60 слов), с юмором и без использования эмодзи."
+    }
+  }
+}

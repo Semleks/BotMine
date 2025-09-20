@@ -4,292 +4,58 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BotMine</title>
-    <!-- Подключаем иконки Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <style>
-        /* Глобальные переменные для удобного управления цветами */
-        :root {
-            --bg-color: #1a1b26;
-            --surface-color: #24283b;
-            --text-color: #c0caf5;
-            --border-color: #414868;
-            --accent-green: #9ece6a;
-            --accent-red: #f7768e;
-            --accent-blue: #7aa2f7;
-            --accent-gray: #5c6370;
-            --modal-bg: rgba(16, 16, 21, 0.8);
-        }
-
-        /* Общие стили */
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            justify-content: center;
-        }
-
-        .container {
-            width: 100%;
-            max-width: 800px;
-        }
-
-        h1, h2, h3, h4 {
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 10px;
-            color: white;
-            font-weight: 500;
-        }
-
-        /* Стили для кнопок */
-        button {
-            color: #fff;
-            border: none;
-            border-radius: 5px;
-            padding: 10px 15px;
-            margin: 5px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: bold;
-            transition: opacity 0.2s ease, transform 0.2s ease, background-color 0.2s ease;
-        }
-
-        button:hover {
-            opacity: 0.9;
-            transform: translateY(-2px);
-        }
-
+        /* Ваши стили остаются без изменений */
+        :root { --bg-color: #1a1b26; --surface-color: #24283b; --text-color: #c0caf5; --border-color: #414868; --accent-green: #9ece6a; --accent-red: #f7768e; --accent-blue: #7aa2f7; --accent-gray: #5c6370; --modal-bg: rgba(16, 16, 21, 0.8); }
+        body { background-color: var(--bg-color); color: var(--text-color); font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px; display: flex; justify-content: center; }
+        .container { width: 100%; max-width: 800px; }
+        h1, h2, h3, h4 { border-bottom: 1px solid var(--border-color); padding-bottom: 10px; color: white; font-weight: 500; }
+        button { color: #fff; border: none; border-radius: 5px; padding: 10px 15px; margin: 5px; cursor: pointer; font-size: 14px; font-weight: bold; transition: opacity 0.2s ease, transform 0.2s ease, background-color 0.2s ease; }
+        button:hover { opacity: 0.9; transform: translateY(-2px); }
         #startBot { background-color: var(--accent-green); }
         #stopBot { background-color: var(--accent-red); }
         #openModalBtn { background-color: var(--accent-blue); }
         #sendMessage { background-color: var(--accent-gray); }
-
-        /* Стили для полей ввода */
-        input[type="text"], input[type="password"] {
-            background-color: var(--surface-color);
-            border: 1px solid var(--border-color);
-            color: var(--text-color);
-            padding: 10px;
-            margin: 5px 0;
-            border-radius: 5px;
-            width: calc(100% - 22px); /* Полная ширина с учетом padding и border */
-        }
-
-        input:focus {
-            outline: none;
-            border-color: var(--accent-blue);
-        }
-
-        /* Информационные блоки */
-        #botInfo {
-            background-color: var(--surface-color);
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            border-left: 4px solid var(--accent-blue);
-        }
-
+        input[type="text"], input[type="password"] { background-color: var(--surface-color); border: 1px solid var(--border-color); color: var(--text-color); padding: 10px; margin: 5px 0; border-radius: 5px; width: calc(100% - 22px); }
+        input:focus { outline: none; border-color: var(--accent-blue); }
+        #botInfo { background-color: var(--surface-color); padding: 15px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid var(--accent-blue); }
         #botInfo p { margin: 5px 0; }
         #botInfo strong { color: white; }
-
-        .controls-grid {
-            display: flex;
-            flex-wrap: wrap;
-            align-items: center;
-        }
-
-        /* Логи */
-        #logs {
-            background: var(--surface-color);
-            color: var(--text-color);
-            padding: 15px;
-            height: 250px;
-            overflow-y: auto;
-            border-radius: 8px;
-            border: 1px solid var(--border-color);
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 14px;
-            line-height: 1.5;
-        }
-        #logs::-webkit-scrollbar { width: 8px; }
-        #logs::-webkit-scrollbar-track { background: var(--surface-color); }
-        #logs::-webkit-scrollbar-thumb { background: var(--accent-gray); border-radius: 4px; }
-        #logs::-webkit-scrollbar-thumb:hover { background: #7a8290; }
-
-        /* Стили для модального окна */
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 100;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            overflow: auto;
-            background-color: var(--modal-bg);
-            backdrop-filter: blur(5px);
-        }
-
-        .modal-content {
-            background-color: var(--surface-color);
-            margin: 15% auto;
-            padding: 25px;
-            border: 1px solid var(--border-color);
-            width: 90%;
-            max-width: 450px;
-            border-radius: 10px;
-            position: relative;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-
-        #createBotBtn {
-            background-color: var(--accent-green);
-            margin-top: 10px;
-        }
-
-        /* Стили для полей в модальном окне настроек */
-        .settings-field {
-            display: flex;
-            flex-direction: column;
-        }
-        .settings-field label {
-            margin-bottom: 5px;
-            font-size: 14px;
-            color: #a9b1d6; /* Чуть светлее основного текста для акцента */
-        }
-
-        .close {
-            color: #aaa;
-            position: absolute;
-            top: 10px;
-            right: 15px;
-            font-size: 28px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-
-        .close:hover,
-        .close:focus {
-            color: white;
-            text-decoration: none;
-        }
-
-        /* --- СТИЛИ ДЛЯ ВКЛАДОК И ПЛАГИНОВ --- */
-
-        .tabs {
-            display: flex;
-            border-bottom: 1px solid var(--border-color);
-            margin-bottom: 20px;
-        }
-
-        .tab-button {
-            background-color: transparent;
-            border: none;
-            color: var(--text-color);
-            padding: 10px 20px;
-            cursor: pointer;
-            font-size: 16px;
-            transition: background-color 0.3s, color 0.3s;
-            border-bottom: 3px solid transparent;
-            margin: 0;
-            border-radius: 0;
-        }
-
-        .tab-button:hover {
-            background-color: var(--surface-color);
-            transform: none;
-        }
-
-        .tab-button.active {
-            color: var(--accent-blue);
-            border-bottom-color: var(--accent-blue);
-        }
-
+        .controls-grid { display: flex; flex-wrap: wrap; align-items: center; }
+        #logs { background: var(--surface-color); color: var(--text-color); padding: 15px; height: 250px; overflow-y: auto; border-radius: 8px; border: 1px solid var(--border-color); font-family: 'Courier New', Courier, monospace; font-size: 14px; line-height: 1.5; }
+        .modal { display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: var(--modal-bg); backdrop-filter: blur(5px); }
+        .modal-content { background-color: var(--surface-color); margin: 15% auto; padding: 25px; border: 1px solid var(--border-color); width: 90%; max-width: 450px; border-radius: 10px; position: relative; box-shadow: 0 5px 15px rgba(0,0,0,0.5); display: flex; flex-direction: column; gap: 15px; }
+        .close { color: #aaa; position: absolute; top: 10px; right: 15px; font-size: 28px; font-weight: bold; cursor: pointer; }
+        .tabs { display: flex; border-bottom: 1px solid var(--border-color); margin-bottom: 20px; }
+        .tab-button { background-color: transparent; border: none; color: var(--text-color); padding: 10px 20px; cursor: pointer; font-size: 16px; transition: background-color 0.3s, color 0.3s; border-bottom: 3px solid transparent; margin: 0; border-radius: 0; }
+        .tab-button:hover { background-color: var(--surface-color); transform: none; }
+        .tab-button.active { color: var(--accent-blue); border-bottom-color: var(--accent-blue); }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
-
-        .plugins-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-            gap: 20px;
-        }
-
-        .plugin-card {
-            background-color: var(--surface-color);
-            border-radius: 8px;
-            padding: 20px;
-            border: 1px solid var(--border-color);
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-            position: relative; /* Для позиционирования шестеренки */
-        }
-        .plugin-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
-        }
-
-        .plugin-card h4 {
-            margin: 0;
-            color: white;
-            border-bottom: none;
-            padding-bottom: 5px;
-        }
-
-        .plugin-card p {
-            margin: 0;
-            font-size: 14px;
-            flex-grow: 1;
-            line-height: 1.6;
-        }
-
-        .plugin-toggle-btn {
-            align-self: flex-start;
-            margin: 10px 0 0 0;
-        }
+        .plugins-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 20px; }
+        .plugin-card { background-color: var(--surface-color); border-radius: 8px; padding: 20px; border: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 10px; transition: transform 0.2s ease, box-shadow 0.2s ease; position: relative; }
+        .plugin-card:hover { transform: translateY(-5px); box-shadow: 0 8px 20px rgba(0,0,0,0.3); }
+        .plugin-card h4 { margin: 0; color: white; border-bottom: none; padding-bottom: 5px; }
+        .plugin-card p { margin: 0; font-size: 14px; flex-grow: 1; line-height: 1.6; }
         .plugin-toggle-btn.load { background-color: var(--accent-green); }
         .plugin-toggle-btn.remove { background-color: var(--accent-red); }
-
-        /* Стили для шестеренки настроек */
-        .plugin-settings-btn {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            font-size: 18px;
-            color: var(--accent-gray);
-            cursor: pointer;
-            transition: color 0.2s, transform 0.2s;
-            display: none; /* Скрыта по умолчанию */
-        }
-        .plugin-settings-btn:hover {
-            color: var(--text-color);
-            transform: rotate(45deg);
-        }
-        /* Показываем шестеренку, только если у карточки есть класс 'active' */
-        .plugin-card.active .plugin-settings-btn {
-            display: block;
-        }
-
+        .plugin-settings-btn { position: absolute; top: 15px; right: 15px; font-size: 18px; color: var(--accent-gray); cursor: pointer; transition: color 0.2s, transform 0.2s; display: none; }
+        .plugin-settings-btn:hover { color: var(--text-color); transform: rotate(45deg); }
+        .plugin-card.active .plugin-settings-btn { display: block; }
+        .settings-field { display: flex; flex-direction: column; }
+        .settings-field label { margin-bottom: 5px; font-size: 14px; color: #a9b1d6; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <h1>BotMine</h1>
-
-    <!-- Навигация по вкладкам -->
     <div class="tabs">
         <button class="tab-button active" onclick="openTab(event, 'main')">Главная</button>
         <button class="tab-button" onclick="openTab(event, 'plugins')">Плагины</button>
     </div>
 
-    <!-- Вкладка "Главная" -->
     <div id="main" class="tab-content active">
         <div id="botInfo">
             <h3>Ваш сохраненный бот:</h3>
@@ -311,74 +77,13 @@
         <div id="logs"></div>
     </div>
 
-    <!-- Вкладка "Плагины" -->
     <div id="plugins" class="tab-content">
         <h3>Доступные плагины</h3>
-        <div class="plugins-grid">
-            <div class="plugin-card" data-plugin-name="Invite">
-                <i class="fa-solid fa-gear plugin-settings-btn"></i>
-                <h4>Команда Invite</h4>
-                <p>Простой плагин, который по команде @invite приглашает игрока в клан.</p>
-                <button class="plugin-toggle-btn">Загрузить</button>
-            </div>
-            <div class="plugin-card" data-plugin-name="Synch">
-                <i class="fa-solid fa-gear plugin-settings-btn"></i>
-                <h4>Синхронизация чата с ДС</h4>
-                <p>Плагин дублирует чат майнкрафт в дискорд по вебхуку.</p>
-                <button class="plugin-toggle-btn">Загрузить</button>
-            </div>
-            <div class="plugin-card" data-plugin-name="AntiTp">
-                <i class="fa-solid fa-gear plugin-settings-btn"></i>
-                <h4>Анти Тп</h4>
-                <p>Если бота куда-то переместят, он введет какую-либо команду (например, /warp)</p>
-                <button class="plugin-toggle-btn">Загрузить</button>
-            </div>
-            <div class="plugin-card" data-plugin-name="AiAssistant">
-                <i class="fa-solid fa-gear plugin-settings-btn"></i>
-                <h4>Нейросеть отвечает пользователям!</h4>
-                <p>Плагин по API gemini отвечает игрокам.</p>
-                <button class="plugin-toggle-btn">Загрузить</button>
-            </div>
-            <div class="plugin-card" data-plugin-name="Messages">
-                <i class="fa-solid fa-gear plugin-settings-btn"></i>
-                <h4>Рекламные сообщения</h4>
-                <p>Бот будет отправлять сообщение с вашей рекламой.</p>
-                <button class="plugin-toggle-btn">Загрузить</button>
-            </div>
-            <div class="plugin-card" data-plugin-name="Autojoin">
-                <i class="fa-solid fa-gear plugin-settings-btn"></i>
-                <h4>Авто заход на сервер</h4>
-                <p>Плагин, который сам заходит на указанный режим.</p>
-                <button class="plugin-toggle-btn">Загрузить</button>
-            </div>
-            <div class="plugin-card" data-plugin-name="Hi">
-                <i class="fa-solid fa-gear plugin-settings-btn"></i>
-                <h4>Приветствие новых игроков</h4>
-                <p>Плагин, который отправляет приветственное сообщение новым соклановцам.</p>
-                <button class="plugin-toggle-btn">Загрузить</button>
-            </div>
-            <div class="plugin-card" data-plugin-name="Bye">
-                <i class="fa-solid fa-gear plugin-settings-btn"></i>
-                <h4>Прощания с вышедшими игроками</h4>
-                <p>Плагин, который отправляет в лс игроку, который вышел из клана, сообщение.</p>
-                <button class="plugin-toggle-btn">Загрузить</button>
-            </div>
-            <div class="plugin-card" data-plugin-name="Pinger">
-                <i class="fa-solid fa-gear plugin-settings-btn"></i>
-                <h4>telegram-pinger</h4>
-                <p>Отправляет уведомления в Telegram при упоминании бота в чате.</p>
-                <button class="plugin-toggle-btn">Загрузить</button>
-            </div>
-            <div class="plugin-card" data-plugin-name="Fly">
-                <i class="fa-solid fa-gear plugin-settings-btn"></i>
-                <h4>Выдача Fly</h4>
-                <p>Плагин, который позволяет по команде @fly получить флай.</p>
-                <button class="plugin-toggle-btn">Загрузить</button>
-            </div>
-        </div>
+        <!-- Этот блок будет заполняться динамически через JavaScript -->
+        <div class="plugins-grid"></div>
     </div>
 
-    <!-- Модальное окно для создания/изменения бота -->
+    <!-- Модальные окна (остаются без изменений) -->
     <div id="botModal" class="modal">
         <div class="modal-content">
             <span class="close">&times;</span>
@@ -386,18 +91,14 @@
             <input type="text" id="modal_username" placeholder="Имя пользователя (username)">
             <input type="password" id="modal_password" placeholder="Пароль (необязательно)">
             <input type="text" id="modal_server" placeholder="Адрес сервера (host)">
-            <button id="createBotBtn">Сохранить и Запустить</button>
+            <button id="createBotBtn" style="background-color: var(--accent-green);">Сохранить и Запустить</button>
         </div>
     </div>
-
-    <!-- Модальное окно для настроек плагинов -->
     <div id="settingsModal" class="modal">
         <div class="modal-content">
             <span class="close">&times;</span>
             <h2 id="settingsModalTitle">Настройки плагина</h2>
-            <div id="settingsModalBody">
-                <!-- Сюда будут динамически добавляться поля ввода -->
-            </div>
+            <div id="settingsModalBody"></div>
             <button id="saveSettingsBtn" style="background-color: var(--accent-green);">Сохранить</button>
         </div>
     </div>
@@ -405,44 +106,75 @@
 
 <script>
     let ws;
-    // Глобальный объект для хранения данных, получаемых с сервера
     let botData = {
         activatedPlugins: [],
         pluginSettings: {}
     };
-    const logsDiv = document.getElementById("logs");
+    let availablePlugins = {}; // Хранилище для информации о всех плагинах
 
-    // Модальные окна
+    const logsDiv = document.getElementById("logs");
     const botModal = document.getElementById("botModal");
     const settingsModal = document.getElementById("settingsModal");
-
-    // Кнопки открытия/закрытия
     const openBotModalBtn = document.getElementById("openModalBtn");
-    const closeBotModalBtn = botModal.querySelector(".close");
-    const closeSettingsModalBtn = settingsModal.querySelector(".close");
-    const createBotBtn = document.getElementById("createBotBtn");
 
-    openBotModalBtn.onclick = function() {
-        document.getElementById('modal_username').value = document.getElementById('botNick').textContent;
-        document.getElementById('modal_server').value = document.getElementById('botServer').textContent;
-        botModal.style.display = "block";
+    // --- WebSocket ---
+    function connect() {
+        if (ws && ws.readyState === WebSocket.OPEN) return;
+        ws = new WebSocket("ws://localhost:3001");
+
+        ws.onopen = () => log("[STATUS] WebSocket подключен.");
+        ws.onmessage = (event) => {
+            try {
+                const data = JSON.parse(event.data);
+
+                if (data.type === "botInfo") {
+                    botData = data.data;
+                    document.getElementById("botNick").textContent = botData.nick || "не задан";
+                    document.getElementById("botServer").textContent = botData.server || "не задан";
+                    log(`[INFO] Загружены данные: Ник - ${botData.nick}, Сервер - ${botData.server}`);
+                    updatePluginButtons();
+                } else if (data.type === "availablePlugins") {
+                    availablePlugins = data.data;
+                    renderPlugins(availablePlugins); // Отрисовываем плагины при получении списка
+                } else if (data.type === "chat") {
+                    log(data.message);
+                } else if (data.type === "status") {
+                    log("[STATUS] " + data.message);
+                }
+            } catch (e) {
+                log("Получено не-JSON сообщение: " + event.data);
+                console.error("Parse error:", e);
+            }
+        };
+        ws.onclose = () => log("[STATUS] WebSocket закрыт. Попытка переподключения через 3с...");
+        ws.onerror = () => log("[ERROR] Ошибка WebSocket.");
     }
-    closeBotModalBtn.onclick = function() { botModal.style.display = "none"; }
-    closeSettingsModalBtn.onclick = function() { settingsModal.style.display = "none"; }
 
-    // Закрытие модальных окон по клику на фон
-    window.onclick = function(event) {
-        if (event.target == botModal) {
-            botModal.style.display = "none";
-        }
-        if (event.target == settingsModal) {
-            settingsModal.style.display = "none";
-        }
-    }
+    connect();
 
+    // --- Логика рендеринга и обновления UI ---
     function log(msg) {
         logsDiv.innerHTML += msg.replace(/</g, "&lt;").replace(/>/g, "&gt;") + "<br>";
         logsDiv.scrollTop = logsDiv.scrollHeight;
+    }
+
+    function renderPlugins(plugins) {
+        const container = document.querySelector('.plugins-grid');
+        container.innerHTML = ''; // Очищаем контейнер перед отрисовкой
+
+        for (const pluginName in plugins) {
+            const plugin = plugins[pluginName];
+            const cardHTML = `
+                <div class="plugin-card" data-plugin-name="${plugin.name}">
+                    <i class="fa-solid fa-gear plugin-settings-btn"></i>
+                    <h4>${plugin.name}</h4>
+                    <p>${plugin.description}</p>
+                    <button class="plugin-toggle-btn">Загрузить</button>
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', cardHTML);
+        }
+        updatePluginButtons(); // Сразу обновляем состояние кнопок
     }
 
     function updatePluginButtons() {
@@ -453,186 +185,109 @@
             if (botData.activatedPlugins.includes(pluginName)) {
                 button.textContent = "Удалить";
                 button.className = 'plugin-toggle-btn remove';
-                card.classList.add('active'); // Добавляем класс для показа шестеренки
+                card.classList.add('active');
             } else {
                 button.textContent = "Загрузить";
                 button.className = 'plugin-toggle-btn load';
-                card.classList.remove('active'); // Убираем класс
+                card.classList.remove('active');
             }
         });
     }
 
-    // --- Функции для модального окна настроек ---
+    // --- Настройки плагинов ---
     function openSettingsModal(pluginName) {
         const settings = botData.pluginSettings[pluginName];
-        const modalTitle = document.getElementById('settingsModalTitle');
+        document.getElementById('settingsModalTitle').textContent = `Настройки: ${pluginName}`;
         const modalBody = document.getElementById('settingsModalBody');
-        const saveBtn = document.getElementById('saveSettingsBtn');
-
-        modalTitle.textContent = `Настройки: ${pluginName}`;
-        modalBody.innerHTML = ''; // Очищаем предыдущие настройки
+        modalBody.innerHTML = '';
 
         if (settings && Object.keys(settings).length > 0) {
-            // Создаем поля ввода на основе данных с сервера
             for (const key in settings) {
                 const setting = settings[key];
-                const fieldHTML = `
+                modalBody.innerHTML += `
                     <div class="settings-field">
                         <label for="setting_${key}">${setting.label}</label>
                         <input type="text" id="setting_${key}" name="${key}" value="${setting.value}">
-                    </div>
-                `;
-                modalBody.insertAdjacentHTML('beforeend', fieldHTML);
+                    </div>`;
             }
-            saveBtn.style.display = 'block';
+            document.getElementById('saveSettingsBtn').style.display = 'block';
         } else {
             modalBody.innerHTML = '<p>Для этого плагина нет доступных настроек.</p>';
-            saveBtn.style.display = 'none'; // Скрываем кнопку, если нечего сохранять
+            document.getElementById('saveSettingsBtn').style.display = 'none';
         }
-
-        // Назначаем действие на кнопку "Сохранить"
-        saveBtn.onclick = () => savePluginSettings(pluginName);
+        document.getElementById('saveSettingsBtn').onclick = () => savePluginSettings(pluginName);
         settingsModal.style.display = "block";
     }
 
     function savePluginSettings(pluginName) {
         const newSettings = {};
-        const inputs = document.querySelectorAll('#settingsModalBody input');
-        inputs.forEach(input => {
+        document.querySelectorAll('#settingsModalBody input').forEach(input => {
             newSettings[input.name] = input.value;
         });
-
-        if (!ws || ws.readyState !== WebSocket.OPEN) {
-            log('[ERROR] WebSocket не подключен.');
-            return;
-        }
-
-        ws.send(JSON.stringify({
-            type: 'savePluginSettings',
-            pluginName: pluginName,
-            settings: newSettings
-        }));
-
+        ws.send(JSON.stringify({ type: 'savePluginSettings', pluginName, settings: newSettings }));
         settingsModal.style.display = "none";
     }
 
-    function connect() {
-        if (ws && ws.readyState === WebSocket.OPEN) return;
-        ws = new WebSocket("ws://localhost:3001");
-
-        ws.onopen = () => log("[STATUS] WebSocket подключен.");
-        ws.onmessage = (event) => {
-            try {
-                const data = JSON.parse(event.data);
-                if(data.type === "botInfo") {
-                    botData = data.data; // Обновляем все данные о боте
-
-                    const nick = botData.nick || "не задан";
-                    const server = botData.server || "не задан";
-                    document.getElementById("botNick").textContent = nick;
-                    document.getElementById("botServer").textContent = server;
-
-                    log(`[INFO] Загружены данные: Ник - ${nick}, Сервер - ${server}`);
-                    updatePluginButtons(); // Обновляем состояние кнопок плагинов
-                } else if(data.type === "chat") {
-                    log(data.message);
-                } else if(data.type === "status") {
-                    log("[STATUS] " + data.message);
-                }
-            } catch (e) {
-                log("Получено не-JSON сообщение: " + event.data);
-                console.error("Parse error:", e);
-            }
-        }
-
-        ws.onclose = () => log("[STATUS] WebSocket закрыт. Попытка переподключения...");
-        ws.onerror = (err) => log("[ERROR] Ошибка WebSocket.");
-    }
-
-    connect(); // Инициализация WebSocket соединения
-
-    // --- ОБРАБОТЧИКИ СОБЫТИЙ ---
-
-    document.getElementById("sendMessage").onclick = () => {
+    // --- Обработчики событий ---
+    function sendWsMessage(type, payload = {}) {
         if (!ws || ws.readyState !== WebSocket.OPEN) {
-            log("[ERROR] Бот не запущен, сообщение не отправить.");
-            return;
-        }
-        const messageInput = document.getElementById("message");
-        const message = messageInput.value;
-        if (!message) return;
-
-        ws.send(JSON.stringify({ type: "sendMessage", message: message }));
-        messageInput.value = ""; // Очищаем поле
-    }
-
-    document.getElementById("startBot").onclick = () => {
-        if (!ws || ws.readyState !== WebSocket.OPEN) {
-            log("[ERROR] WebSocket не подключен. Переподключаюсь...");
-            connect();
-            return;
-        }
-        ws.send(JSON.stringify({ type: "startBot" }));
-        log("[CMD] Отправлена команда на запуск бота...");
-    }
-
-    document.getElementById("stopBot").onclick = () => {
-        if(!ws || ws.readyState !== WebSocket.OPEN) {
             log("[ERROR] WebSocket не подключен.");
             return;
         }
-        ws.send(JSON.stringify({ type: "stopBot" }));
+        ws.send(JSON.stringify({ type, ...payload }));
     }
 
-    createBotBtn.onclick = () => {
-        if(!ws || ws.readyState !== WebSocket.OPEN) {
-            log("[ERROR] WebSocket не подключен. Повторите попытку.");
-            connect();
-            return;
+    document.getElementById("startBot").onclick = () => sendWsMessage('startBot');
+    document.getElementById("stopBot").onclick = () => sendWsMessage('stopBot');
+    document.getElementById("sendMessage").onclick = () => {
+        const messageInput = document.getElementById("message");
+        if (messageInput.value) {
+            sendWsMessage('sendMessage', { message: messageInput.value });
+            messageInput.value = "";
         }
+    };
+
+    document.getElementById("createBotBtn").onclick = () => {
         const host = document.getElementById("modal_server").value;
         const username = document.getElementById("modal_username").value;
         const password = document.getElementById("modal_password").value;
-
-        ws.send(JSON.stringify({ type: "createBot", host, username, password }));
+        sendWsMessage('createBot', { host, username, password });
         botModal.style.display = "none";
-    }
+    };
 
-    // Делегирование событий для кнопок плагинов
+    openBotModalBtn.onclick = () => {
+        document.getElementById('modal_username').value = botData.nick || "";
+        document.getElementById('modal_server').value = botData.server || "";
+        document.getElementById('modal_password').value = "";
+        botModal.style.display = "block";
+    };
+
+    // Делегирование для кнопок плагинов
     document.querySelector('.plugins-grid').addEventListener('click', (e) => {
-        if (!ws || ws.readyState !== WebSocket.OPEN) {
-            log("[ERROR] WebSocket не подключен.");
-            return;
-        }
         const card = e.target.closest('.plugin-card');
         if (!card) return;
-
         const pluginName = card.dataset.pluginName;
 
-        // Если кликнули на кнопку Загрузить/Удалить
         if (e.target.classList.contains('plugin-toggle-btn')) {
-            ws.send(JSON.stringify({ type: 'togglePlugin', pluginName: pluginName }));
+            sendWsMessage('togglePlugin', { pluginName });
         }
-        // Если кликнули на шестеренку
         if (e.target.classList.contains('plugin-settings-btn')) {
             openSettingsModal(pluginName);
         }
     });
 
-    // ----- JAVASCRIPT ДЛЯ ПЕРЕКЛЮЧЕНИЯ ВКЛАДОК -----
+    // --- Модальные окна и вкладки ---
+    botModal.querySelector(".close").onclick = () => botModal.style.display = "none";
+    settingsModal.querySelector(".close").onclick = () => settingsModal.style.display = "none";
+    window.onclick = (event) => {
+        if (event.target == botModal) botModal.style.display = "none";
+        if (event.target == settingsModal) settingsModal.style.display = "none";
+    };
     function openTab(evt, tabName) {
-        const tabcontent = document.getElementsByClassName("tab-content");
-        for (let i = 0; i < tabcontent.length; i++) {
-            tabcontent[i].style.display = "none";
-        }
-
-        const tablinks = document.getElementsByClassName("tab-button");
-        for (let i = 0; i < tablinks.length; i++) {
-            tablinks[i].className = tablinks[i].className.replace(" active", "");
-        }
-
+        document.querySelectorAll(".tab-content").forEach(tab => tab.style.display = "none");
+        document.querySelectorAll(".tab-button").forEach(btn => btn.classList.remove("active"));
         document.getElementById(tabName).style.display = "block";
-        evt.currentTarget.className += " active";
+        evt.currentTarget.classList.add("active");
     }
 </script>
 </body>
