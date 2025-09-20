@@ -3,6 +3,7 @@
 const express = require("express");
 const { WebSocketServer } = require("ws");
 const mineflayer = require("mineflayer");
+const os = require('os');
 const path = require("path");
 const fs = require("fs");
 
@@ -31,8 +32,8 @@ const app = express();
 const wss = new WebSocketServer({ port: 3001 });
 let bot = null; // Глобальная переменная для экземпляра бота
 
-const username = process.env.USERNAME || process.env.USER;
-const filePath = path.join('C:\\Users', username, 'Botmine', 'main.json');
+const dataFolder = path.join(os.homedir(), '.bot-mine');
+const filePath = path.join(dataFolder, 'main.json');
 const dir = path.dirname(filePath);
 if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 
