@@ -57,7 +57,7 @@ class Bot {
                 console.log(`[LOG] [GitHub] Новый коммит: ${message} от ${author}`);
 
                 // 💬 Отправляем в чат
-                bot.chat(`!Коммит: ${message} от ${author}`);
+                bot.chat(`!Новое обновление BotMine: ${message} от ${author}`);
             }
 
             this.lastCommitSha = sha;
