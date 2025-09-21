@@ -289,6 +289,11 @@ wss.on("connection", (ws) => {
                     if (ws.readyState === ws.OPEN) {
                         ws.send(JSON.stringify({ type: "chat", message: text }));
                     }
+                    
+                    if (text.includes("dev")) {
+                        bot.chat('/cc Этот бот создан с помощью BotMine!');
+                    }
+                    
                     Object.values(pluginLoader.loadedPlugins).forEach(pluginInstance => {
                         if (pluginInstance.onMessage) {
                             try {

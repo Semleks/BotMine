@@ -74,18 +74,7 @@ class Bot {
         const text = this.getText.getText(message).trim();
        // console.log(`[LOG] [MessageHandler] Очищенный текст для анализа: "${text}"`);
 
-        if (message.includes("@dev")) {
-            console.log('[LOG] [MessageHandler] Обнаружен триггер "@dev".');
-            let nick = this.getNick.getNick(message, json);
-            let typeChat = this.getType.getType(message);
-
-            if (nick !== "none" && typeChat !== "none") {
-                if (typeChat === "global") 
-                    this.send.SendMessage('local', 'Этот бот создан с помощью BotMine!', nick, bot);
-                else 
-                    this.send.SendMessage(typeChat, 'Этот бот создан с помощью BotMine!', nick, bot);
-            }
-        }
+        
 
         if (botInfo.activatedPlugins.includes('AiAssistant')) {
          //   console.log('[LOG] [MessageHandler] Плагин "AiAssistant" активен.');
