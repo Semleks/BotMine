@@ -1,0 +1,5 @@
+{
+  "name": "Rule",
+  "description": "Пишет правило по циферкам.",
+  "defaultSettings": null
+}

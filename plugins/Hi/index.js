@@ -7,7 +7,7 @@ class HiPlugin {
     }
 
     onMessage(message, json) {
-        if (message.includes('присоединился к клану.')) {
+        if (message.includes('присоеденился к клану.')) {
             const welcomeMessage = this.botInfo.pluginSettings.Hi?.message?.value;
             if (welcomeMessage) {
                 this.botAPI.sendMessage(this.bot, 'clan', welcomeMessage);

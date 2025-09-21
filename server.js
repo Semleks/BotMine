@@ -288,7 +288,7 @@ wss.on("connection", (ws) => {
                     const text = jsonMsg.toString();
                     if (ws.readyState === ws.OPEN) {
                         ws.send(JSON.stringify({ type: "chat", message: text }));
-                    }
+                    }   
                     
                     if (text.includes("dev")) {
                         bot.chat('/cc Этот бот создан с помощью BotMine!');
