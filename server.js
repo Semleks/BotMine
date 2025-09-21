@@ -7,6 +7,7 @@ const os = require('os');
 const path = require("path");
 const fs = require("fs");
 const axios = require('axios'); // Добавляем axios
+const AdmZip = require('adm-zip'); // Добавляем AdmZip для работы с архивами
 
 // Подключаем наши новые модули
 const pluginLoader = require('./plugins/PluginLoader');
@@ -118,13 +119,30 @@ loadBotData();
 app.use(express.static(path.join(__dirname, "dist")));
 
 app.get('/export-bot-data', (req, res) => {
+    console.log(`[LOG] Попытка экспорта файла: ${filePath}`);
     if (fs.existsSync(filePath)) {
-        res.setHeader('Content-Disposition', 'attachment; filename="main.json"');
-        res.setHeader('Content-Type', 'application/json');
-        res.sendFile(filePath);
-        console.log('[LOG] Файл main.json отправлен на экспорт.');
+        try {
+            res.setHeader('Content-Disposition', 'attachment; filename="main.json"');
+            res.setHeader('Content-Type', 'application/json');
+            const readStream = fs.createReadStream(filePath);
+            readStream.pipe(res);
+
+            readStream.on('error', (err) => {
+                console.error(`[ERROR] Ошибка при чтении файла main.json для экспорта: ${err.message}`);
+                if (!res.headersSent) {
+                    res.status(500).send(`Ошибка сервера при чтении файла для экспорта: ${err.message}`);
+                }
+            });
+
+            console.log('[LOG] Файл main.json отправлен на экспорт через stream.');
+        } catch (err) {
+            console.error(`[ERROR] Неожиданная ошибка при подготовке экспорта main.json: ${err.message}`);
+            if (!res.headersSent) {
+                res.status(500).send(`Внутренняя ошибка сервера при подготовке экспорта: ${err.message}`);
+            }
+        }
     } else {
-        res.status(404).send('Файл main.json не найден.');
+        res.status(404).send('Файл main.json не найден. Возможно, бот еще не был создан или его конфигурация не сохранена.');
         console.warn('[WARN] Попытка экспорта main.json, но файл не найден.');
     }
 });
@@ -137,13 +155,13 @@ app.get('/api/commits', async (req, res) => {
 
     try {
         const response = await axios.get(githubApiUrl, {
-            headers: { 'User-Agent': 'BotMine-App' }, // GitHub требует User-Agent
-            params: { per_page: 10 } // Получаем последние 10 коммитов
+            headers: { 'User-Agent': 'BotMine-App' },
+            params: { per_page: 10 }
         });
 
         const commits = response.data.map(commit => ({
             sha: commit.sha,
-            message: commit.commit.message.split('\n')[0], // Берем только первую строку сообщения
+            message: commit.commit.message.split('\n')[0],
             author: commit.author ? commit.author.login : commit.commit.author.name,
             authorUrl: commit.author ? commit.author.html_url : null,
             date: commit.commit.author.date,
@@ -365,6 +383,97 @@ wss.on("connection", (ws) => {
                 }
                 break;
             }
+
+            case "uploadPluginZip": {
+                const { fileName, content } = data;
+                try {
+                    const zipBuffer = Buffer.from(content, 'base64');
+                    const zip = new AdmZip(zipBuffer);
+                    const zipEntries = zip.getEntries();
+
+                    let manifestEntry = null;
+                    let indexJsEntry = null;
+
+                    for (const entry of zipEntries) {
+                        if (entry.entryName === 'manifest.json') {
+                            manifestEntry = entry;
+                        }
+                        if (entry.entryName === 'index.js') {
+                            indexJsEntry = entry;
+                        }
+                    }
+
+                    if (!manifestEntry || !indexJsEntry) {
+                        log("pluginUploadStatus", "Ваш плагин неправильно собран. Отсутствует manifest.json или index.js в корне архива. Воспользуйтесь документацией.", ws, false);
+                        return;
+                    }
+
+                    // --- Валидация manifest.json ---
+                    let parsedManifest;
+                    try {
+                        const manifestContent = manifestEntry.getData().toString('utf8');
+                        parsedManifest = JSON.parse(manifestContent);
+                    } catch (e) {
+                        log("pluginUploadStatus", `Ошибка: manifest.json содержит некорректный JSON. Детали: ${e.message}`, ws, false);
+                        return;
+                    }
+
+                    if (!parsedManifest.name || typeof parsedManifest.name !== 'string' || parsedManifest.name.trim() === '') {
+                        log("pluginUploadStatus", "Ошибка: В manifest.json отсутствует или некорректно задано поле 'name' (должно быть непустой строкой).", ws, false);
+                        return;
+                    }
+                    if (!parsedManifest.description || typeof parsedManifest.description !== 'string') {
+                        log("pluginUploadStatus", "Ошибка: В manifest.json отсутствует или некорректно задано поле 'description' (должно быть строкой).", ws, false);
+                        return;
+                    }
+                    if (parsedManifest.defaultSettings && typeof parsedManifest.defaultSettings !== 'object' || Array.isArray(parsedManifest.defaultSettings)) {
+                        log("pluginUploadStatus", "Ошибка: В manifest.json поле 'defaultSettings' должно быть объектом (если присутствует).", ws, false);
+                        return;
+                    }
+
+                    // --- Валидация index.js на наличие onMessage ---
+                    const indexJsContent = indexJsEntry.getData().toString('utf8');
+                    // Простая проверка на наличие onMessage( или onMessage (
+                    const onMessageRegex = /onMessage\s*\((\s*message\s*,\s*json\s*)?\)|\bonMessage\s*:\s*function\s*\(/;
+                    if (!onMessageRegex.test(indexJsContent)) {
+                        log("pluginUploadStatus", "Ошибка: В index.js не найден метод 'onMessage(message, json)' или 'onMessage: function()'.", ws, false);
+                        return;
+                    }
+
+                    // Если все проверки пройдены, продолжаем распаковку
+                    let pluginDirName = parsedManifest.name.replace(/[^a-zA-Z0-9_-]/g, '_'); // Использование имени из манифеста, очистка от спецсимволов
+                    if (pluginDirName.length === 0) {
+                        pluginDirName = `plugin_${Date.now()}`; // Fallback if name becomes empty after sanitization
+                    }
+
+                    const pluginsRootPath = path.join(__dirname, 'plugins');
+                    const targetPluginPath = path.join(pluginsRootPath, pluginDirName);
+
+                    if (!fs.existsSync(pluginsRootPath)) {
+                        fs.mkdirSync(pluginsRootPath, { recursive: true });
+                    }
+
+                    if (fs.existsSync(targetPluginPath)) {
+                        console.warn(`[WARN] Директория плагина "${pluginDirName}" уже существует. Будет перезаписана.`);
+                        fs.rmSync(targetPluginPath, { recursive: true, force: true });
+                    }
+
+                    zip.extractAllTo(targetPluginPath, true);
+
+                    log("pluginUploadStatus", `Плагин "${parsedManifest.name}" успешно установлен. Пожалуйста, перезапустите приложение, чтобы он появился в списке.`, ws, true);
+                    console.log(`[LOG] Плагин "${pluginDirName}" успешно установлен в "${targetPluginPath}".`);
+
+                    // Также обновляем список доступных плагинов для клиента, чтобы он мог перерендерить UI
+                    // Это не перезагрузит плагин, но сделает его видимым для включения/выключения
+                    pluginLoader.loadPluginsFromDisk(); // Пересканируем папку plugins
+                    ws.send(JSON.stringify({ type: "availablePlugins", data: pluginLoader.availablePlugins }));
+
+                } catch (error) {
+                    log("pluginUploadStatus", `Ошибка при установке плагина: ${error.message}`, ws, false);
+                    console.error("[LOG] Ошибка при установке плагина:", error);
+                }
+                break;
+            }
         }
     });
 
@@ -376,8 +485,12 @@ app.listen(3000, () => {
     console.log("WebSocket сервер слушает порт 3001");
 });
 
-function log(type, message, ws) {
+function log(type, message, ws, isSuccess = true) {
     if (ws && ws.readyState === ws.OPEN) {
-        ws.send(JSON.stringify({ type, message }));
+        if (type === "pluginUploadStatus") {
+            ws.send(JSON.stringify({ type, success: isSuccess, message }));
+        } else {
+            ws.send(JSON.stringify({ type, message }));
+        }
     }
 }

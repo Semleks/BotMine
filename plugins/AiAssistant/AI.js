@@ -1,28 +1,28 @@
 let fetch;
 let HttpsProxyAgent;
 
-const PROXY_HOST = "127.0.0.1";
-const PROXY_PORT = 2081;
-
 const MODEL_NAME = "models/gemini-2.5-flash-lite";
 
 let agent;
 
 class AI {
-    constructor() {
-        this._loadModules();
+    constructor(host, port) {
+        this._loadModules(host, port);
     }
 
-    async _loadModules() {
-        if (!fetch) { // Загружаем только один раз
+    async _loadModules(host, port) {
+        console.log('start')
+        if (!fetch) {
             try {
+                console.log('[AiAssistantPlugin] fetch request');
                 const nodeFetchModule = await import("node-fetch");
                 fetch = nodeFetchModule.default;
 
                 const httpsProxyAgentModule = await import("https-proxy-agent");
                 HttpsProxyAgent = httpsProxyAgentModule.HttpsProxyAgent;
 
-                agent = new HttpsProxyAgent(`http://${PROXY_HOST}:${PROXY_PORT}`);
+                console.log('proxy settings: ' + host + port);
+                agent = new HttpsProxyAgent(`http://${host}:${port}`);
             } catch (error) {
                 console.error("Failed to load fetch or proxy agent modules:", error);
                 // В реальном приложении здесь можно выбросить ошибку или как-то иначе обработать
@@ -30,9 +30,9 @@ class AI {
         }
     }
 
-    async NewQuestion(question, username, promt, api) {
+    async NewQuestion(question, username, promt, api, proxyHost, proxyPort) {
         // Убедимся, что модули загружены
-        await this._loadModules();
+        await this._loadModules(proxyHost, proxyPort);
 
         // Формируем промпт для нейросети
         try {

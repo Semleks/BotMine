@@ -7,7 +7,7 @@ class AiAssistantPlugin {
         this.bot = bot;
         this.botInfo = botInfo;
         this.botAPI = botAPI;
-        this.ai = new AI();
+        this.ai = new AI(this.botInfo.pluginSettings.AiAssistant?.host?.value, this.botInfo.pluginSettings.AiAssistant?.port?.value);
         console.log('[AiAssistantPlugin] Плагин загружен.');
     }
 
@@ -15,13 +15,17 @@ class AiAssistantPlugin {
         const text = this.botAPI.getText(message);
         if (text === 'none') return;
 
+        this.ai.NewQuestion("Привет", "Dream", this.botInfo.pluginSettings.AiAssistant?.promt?.value, this.botInfo.pluginSettings.AiAssistant?.key?.value, this.botInfo.pluginSettings.AiAssistant?.host?.value, this.botInfo.pluginSettings.AiAssistant?.port?.value);
+
         // Реагируем, если сообщение начинается с ника бота или слова "бот"
         if (text.toLowerCase().startsWith(this.botInfo.nick.toLowerCase()) || text.toLowerCase().startsWith('бот')) {
             const apiKey = this.botInfo.pluginSettings.AiAssistant?.key?.value;
             const promt = this.botInfo.pluginSettings.AiAssistant?.promt?.value;
+            const port = this.botInfo.pluginSettings.AiAssistant?.port?.value;
+            const host = this.botInfo.pluginSettings.AiAssistant?.host?.value;
 
-            if (!apiKey) {
-                console.log('[AiAssistantPlugin] API ключ не указан в настройках.');
+            if (!apiKey || !promt || !port || !host) {
+                console.warn('[AiAssistantPlugin] Настройки не настроены.');
                 return;
             }
 
@@ -33,7 +37,7 @@ class AiAssistantPlugin {
             console.log(`[AiAssistantPlugin] Получен вопрос от ${nick}: "${text}"`);
 
             try {
-                const response = await this.ai.NewQuestion(text, nick, promt, apiKey);
+                const response = await this.ai.NewQuestion(text, nick, promt, apiKey, host, port);
                 this.botAPI.sendMessage(this.bot, type, response, nick);
             } catch (e) {
                 console.error('[AiAssistantPlugin] Ошибка при запросе к Gemini API:', e);
