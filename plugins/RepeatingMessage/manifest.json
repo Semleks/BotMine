@@ -1,0 +1,14 @@
+{
+  "name": "RepeatingMessage",
+  "description": "Отправляет рекламу в глобальный чат каждые 2 минуты.",
+  "defaultSettings": {
+    "messageToSend": {
+      "label": "Сообщение для отправки:",
+      "value": "Заходите в мой клан!"
+    },
+    "intervalMinutes": {
+      "label": "Интервал отправки (минуты):",
+      "value": "2"
+    }
+  }
+}
