@@ -1,85 +1,139 @@
-const fs = require('fs');
+// plugins/PluginLoader.js
 const path = require('path');
+const fs = require('fs');
 
 class PluginLoader {
     constructor() {
-        this.availablePlugins = {}; // { pluginName: { manifestData, path } }
-        this.loadedPlugins = {};    // { pluginName: pluginInstance }
-        this.scanForPlugins();
+        this.availablePlugins = {}; // Хранит метаданные плагинов из манифестов
+        this.loadedPlugins = {};   // Хранит экземпляры загруженных плагинов
+        this.pluginsRootPath = __dirname; // Указывает на директорию 'plugins'
+        this.loadPluginsFromDisk();
     }
 
-    /**
-     * Сканирует директорию /plugins и загружает метаданные (manifest.json) всех найденных плагинов.
-     */
-    scanForPlugins() {
-        const pluginsDir = path.join(__dirname, '..', 'plugins');
-        console.log('[PluginLoader] Сканирование директории плагинов...');
-
-        if (!fs.existsSync(pluginsDir)) {
-            console.warn('[PluginLoader] Директория /plugins не найдена. Создайте ее для добавления плагинов.');
-            fs.mkdirSync(pluginsDir);
-            return;
-        }
-
-        const pluginFolders = fs.readdirSync(pluginsDir, { withFileTypes: true })
+    loadPluginsFromDisk() {
+        this.availablePlugins = {}; // Очищаем существующие для обновления
+        const pluginFolders = fs.readdirSync(this.pluginsRootPath, { withFileTypes: true })
             .filter(dirent => dirent.isDirectory())
             .map(dirent => dirent.name);
 
         for (const folderName of pluginFolders) {
-            const manifestPath = path.join(pluginsDir, folderName, 'manifest.json');
-            if (fs.existsSync(manifestPath)) {
+            const pluginPath = path.join(this.pluginsRootPath, folderName);
+            const manifestPath = path.join(pluginPath, 'manifest.json');
+            const indexPath = path.join(pluginPath, 'index.js');
+
+            if (fs.existsSync(manifestPath) && fs.existsSync(indexPath)) {
                 try {
-                    const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf-8'));
-                    this.availablePlugins[manifest.name] = {
-                        path: path.join(pluginsDir, folderName, 'index.js'),
-                        ...manifest
-                    };
+                    const manifestContent = fs.readFileSync(manifestPath, 'utf8');
+                    const manifest = JSON.parse(manifestContent);
+                    if (manifest.name && typeof manifest.name === 'string' && manifest.name.trim() !== '' &&
+                        manifest.description && typeof manifest.description === 'string') {
+                        this.availablePlugins[manifest.name] = {
+                            name: manifest.name,
+                            description: manifest.description,
+                            path: indexPath,
+                            defaultSettings: manifest.defaultSettings || {}
+                        };
+                        console.log(`[PluginLoader] Загружен манифест для плагина: ${manifest.name}`);
+                    } else {
+                        console.warn(`[PluginLoader] Манифест для плагина в ${folderName} некорректен (отсутствует или неверный name/description).`);
+                    }
                 } catch (e) {
-                    console.error(`[PluginLoader] Ошибка чтения manifest.json для плагина ${folderName}:`, e);
+                    console.error(`[PluginLoader] Ошибка чтения/парсинга манифеста для плагина в ${folderName}:`, e);
                 }
+            } else {
+                console.warn(`[PluginLoader] Папка ${folderName} не содержит manifest.json или index.js.`);
             }
         }
-        console.log(`[PluginLoader] Найдено доступных плагинов: ${Object.keys(this.availablePlugins).length}`);
     }
 
     /**
-     * Загружает и инициализирует все плагины, которые отмечены как активные в myBot.activatedPlugins.
-     * @param {object} bot - Экземпляр mineflayer бота.
-     * @param {object} myBot - Глобальный объект с данными бота.
-     * @param {object} botAPI - Экземпляр BotAPI.
+     * Загружает и запускает активные плагины.
+     * @param {mineflayer.Bot} bot Экземпляр бота Mineflayer.
+     * @param {object} botInfo Объект с информацией о боте (myBot).
+     * @param {object} botAPI Объект с API для взаимодействия с ботом.
      */
-    loadActivePlugins(bot, myBot, botAPI) {
-        console.log('[PluginLoader] Загрузка активных плагинов...');
-        this.loadedPlugins = {}; // Очищаем старые экземпляры
+    loadActivePlugins(bot, botInfo, botAPI) {
+        // Сначала останавливаем и выгружаем плагины, которые больше не активны или требуют перезагрузки
+        for (const pluginName in this.loadedPlugins) {
+            // Если плагин больше не в списке активированных, или экземпляр бота изменился
+            if (!botInfo.activatedPlugins.includes(pluginName) || this.loadedPlugins[pluginName].bot !== bot) {
+                console.log(`[PluginLoader] Отключение и выгрузка плагина: ${pluginName}`);
+                this.unloadPlugin(pluginName); // Вызываем unloadPlugin, который также вызовет stop()
+            }
+        }
 
-        for (const pluginName of myBot.activatedPlugins) {
-            const pluginInfo = this.availablePlugins[pluginName];
-            if (pluginInfo && fs.existsSync(pluginInfo.path)) {
-                try {
-                    // Очищаем кэш модуля, чтобы можно было вносить изменения в код плагина без перезапуска сервера
-                    delete require.cache[require.resolve(pluginInfo.path)];
-                    const PluginClass = require(pluginInfo.path);
-                    this.loadedPlugins[pluginName] = new PluginClass(bot, myBot, botAPI);
-                    console.log(`[PluginLoader] Плагин "${pluginName}" успешно загружен и инициализирован.`);
-                } catch (e) {
-                    console.error(`[PluginLoader] КРИТИЧЕСКАЯ ОШИБКА при инициализации плагина ${pluginName}:`, e);
+        // Затем загружаем новые активные плагины или перезапускаем уже загруженные, если бот переподключился
+        for (const pluginName of botInfo.activatedPlugins) {
+            // Если плагин не загружен ИЛИ загруженный плагин имеет другой экземпляр бота (переподключение)
+            if (!this.loadedPlugins[pluginName] || this.loadedPlugins[pluginName].bot !== bot) {
+                const pluginInfo = this.availablePlugins[pluginName];
+                if (pluginInfo) {
+                    try {
+                        // Очищаем кэш модуля, чтобы гарантировать свежую загрузку, если файл изменился
+                        delete require.cache[require.resolve(pluginInfo.path)];
+                        const PluginClass = require(pluginInfo.path);
+                        this.loadedPlugins[pluginName] = new PluginClass(bot, botInfo, botAPI);
+                        console.log(`[PluginLoader] Активирован плагин: ${pluginName}`);
+
+                        // *** Вызываем метод start() плагина, если он есть ***
+                        if (this.loadedPlugins[pluginName].start && typeof this.loadedPlugins[pluginName].start === 'function') {
+                            this.loadedPlugins[pluginName].start();
+                        }
+
+                    } catch (e) {
+                        console.error(`[PluginLoader] Ошибка при загрузке или инициализации плагина "${pluginName}":`, e);
+                        // Удаляем из списка активированных, если плагин не удалось загрузить
+                        const index = botInfo.activatedPlugins.indexOf(pluginName);
+                        if (index > -1) botInfo.activatedPlugins.splice(index, 1);
+                    }
+                } else {
+                    console.warn(`[PluginLoader] Активный плагин "${pluginName}" не найден среди доступных. Возможно, был удален.`);
+                    // Удаляем из списка активированных, если он больше недоступен на диске
+                    const index = botInfo.activatedPlugins.indexOf(pluginName);
+                    if (index > -1) botInfo.activatedPlugins.splice(index, 1);
+                }
+            } else {
+                // Плагин уже загружен с текущим экземпляром бота, просто убедимся, что он запущен (вызов start() внутри себя проверит)
+                if (this.loadedPlugins[pluginName].start && typeof this.loadedPlugins[pluginName].start === 'function') {
+                    this.loadedPlugins[pluginName].start();
                 }
             }
         }
     }
 
     /**
-     * Выгружает один конкретный плагин (удаляет его экземпляр).
-     * @param {string} pluginName - Имя плагина для выгрузки.
+     * Останавливает и выгружает один плагин.
+     * @param {string} pluginName Имя плагина.
      */
     unloadPlugin(pluginName) {
-        if (this.loadedPlugins[pluginName] && typeof this.loadedPlugins[pluginName].onUnload === 'function') {
-            this.loadedPlugins[pluginName].onUnload();
+        if (this.loadedPlugins[pluginName]) {
+            // *** Вызываем метод stop() плагина, если он есть ***
+            if (this.loadedPlugins[pluginName].stop && typeof this.loadedPlugins[pluginName].stop === 'function') {
+                this.loadedPlugins[pluginName].stop();
+            }
+            delete this.loadedPlugins[pluginName];
+            console.log(`[PluginLoader] Плагин "${pluginName}" выгружен.`);
+            // Также удаляем из кэша require, чтобы гарантировать свежую загрузку в следующий раз
+            const pluginInfo = this.availablePlugins[pluginName];
+            if (pluginInfo && require.cache[require.resolve(pluginInfo.path)]) {
+                delete require.cache[require.resolve(pluginInfo.path)];
+            }
         }
-        delete this.loadedPlugins[pluginName];
-        console.log(`[PluginLoader] Плагин "${pluginName}" выгружен.`);
+    }
+
+    /**
+     * Останавливает все загруженные плагины.
+     * Используется, например, при завершении работы бота.
+     */
+    stopAllLoadedPlugins() {
+        console.log('[PluginLoader] Остановка всех активных плагинов...');
+        for (const pluginName in this.loadedPlugins) {
+            if (this.loadedPlugins[pluginName].stop && typeof this.loadedPlugins[pluginName].stop === 'function') {
+                this.loadedPlugins[pluginName].stop();
+            }
+        }
+        this.loadedPlugins = {}; // Очищаем список загруженных плагинов
     }
 }
 
-// Экспортируем один экземпляр на все приложение (синглтон)
 module.exports = new PluginLoader();

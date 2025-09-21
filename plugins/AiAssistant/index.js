@@ -15,8 +15,6 @@ class AiAssistantPlugin {
         const text = this.botAPI.getText(message);
         if (text === 'none') return;
 
-        this.ai.NewQuestion("Привет", "Dream", this.botInfo.pluginSettings.AiAssistant?.promt?.value, this.botInfo.pluginSettings.AiAssistant?.key?.value, this.botInfo.pluginSettings.AiAssistant?.host?.value, this.botInfo.pluginSettings.AiAssistant?.port?.value);
-
         // Реагируем, если сообщение начинается с ника бота или слова "бот"
         if (text.toLowerCase().startsWith(this.botInfo.nick.toLowerCase()) || text.toLowerCase().startsWith('бот')) {
             const apiKey = this.botInfo.pluginSettings.AiAssistant?.key?.value;
