@@ -1,0 +1,10 @@
+{
+    "name": "stats",
+    "description": "Плагин, который делает статистику клана.",
+    "defaultSettings": {
+      "adminNick": {
+        "label": "Ник админа",
+        "value": ""
+      }
+    }
+}  

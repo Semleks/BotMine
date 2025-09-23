@@ -47,6 +47,11 @@
             align-items: center;
             min-height: 100vh;
             text-align: center;
+            /* Prevent text selection during drag */
+        }
+
+        body.resizing {
+            user-select: none;
         }
 
         .page {
@@ -283,7 +288,9 @@
             background: var(--bg-color);
             color: var(--text-color);
             padding: 18px;
-            flex-grow: 1;
+            height: 250px; /* Начальная высота */
+            min-height: 60px; /* Минимальная высота */
+            flex-shrink: 0; /* Предотвращаем сжатие flex-контейнером */
             overflow-y: auto;
             border-radius: 10px;
             border: 1px solid var(--border-color);
@@ -293,6 +300,33 @@
             box-shadow: inset 0 2px 8px var(--shadow-light);
             word-break: break-all;
         }
+
+        /* --- НОВЫЕ УЛУЧШЕННЫЕ СТИЛИ ДЛЯ РЕСАЙЗЕРА --- */
+        .resizer {
+            width: 100%;
+            height: 12px; /* Увеличена область для захвата */
+            background: transparent;
+            cursor: row-resize;
+            position: relative;
+            margin-top: -10px; /* Небольшое наложение для лучшего вида */
+            margin-bottom: 10px;
+        }
+        .resizer::after {
+            content: '';
+            position: absolute;
+            top: 5px; /* Позиционируем линию по центру */
+            left: 40%;
+            right: 40%;
+            height: 4px;
+            background-color: var(--border-color);
+            border-radius: 2px;
+            transition: background-color 0.2s ease;
+        }
+        .resizer:hover::after {
+            background-color: var(--accent-blue);
+        }
+        /* --- КОНЕЦ СТИЛЕЙ РЕСАЙЗЕРА --- */
+
         #logs::-webkit-scrollbar { width: 8px; }
         #logs::-webkit-scrollbar-track { background: var(--bg-color); border-radius: 10px; }
         #logs::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 10px; }
@@ -379,6 +413,7 @@
         <div id="main" class="tab-content active">
             <h2><i class="fa-solid fa-comments"></i> Игровой чат</h2>
             <div id="logs"></div>
+            <div class="resizer" id="dragHandle"></div>
             <div class="message-input-container">
                 <input id="message" type="text" placeholder="Введите сообщение..." disabled>
                 <button id="sendMessage" disabled><i class="fa-solid fa-paper-plane"></i> Отправить</button>
@@ -557,6 +592,34 @@
         const addMyPluginBtn = document.getElementById("addMyPluginBtn");
         const howToCreatePluginBtn = document.getElementById("howToCreatePluginBtn");
         const pluginZipInput = document.getElementById("pluginZipInput");
+
+        // --- УЛУЧШЕННЫЙ КОД ДЛЯ ИЗМЕНЕНИЯ РАЗМЕРА КОНСОЛИ ---
+        const dragHandle = document.getElementById('dragHandle');
+
+        dragHandle.addEventListener('mousedown', function(e) {
+            e.preventDefault(); // Предотвращаем стандартное поведение (например, выделение текста)
+
+            const startY = e.clientY;
+            const startHeight = logsDiv.offsetHeight;
+
+            document.body.classList.add('resizing');
+
+            function doDrag(e) {
+                const newHeight = startHeight + e.clientY - startY;
+                // Устанавливаем минимальную высоту, но не ограничиваем максимальную
+                logsDiv.style.height = `${Math.max(60, newHeight)}px`;
+            }
+
+            function stopDrag() {
+                document.removeEventListener('mousemove', doDrag);
+                document.removeEventListener('mouseup', stopDrag);
+                document.body.classList.remove('resizing');
+            }
+
+            document.addEventListener('mousemove', doDrag);
+            document.addEventListener('mouseup', stopDrag);
+        });
+        // --- КОНЕЦ КОДА ДЛЯ ИЗМЕНЕНИЯ РАЗМЕРА ---
 
         mainBotCard.addEventListener('click', () => {
             botSelectionPage.classList.remove('active');
@@ -892,4 +955,4 @@
     });
 </script>
 </body>
-</html>```
+</html>
