@@ -19,6 +19,7 @@ class SynchPlugin {
     async onMessage(message, json) {
         const webhookUrl = this.botInfo.pluginSettings.Synch?.webhook?.value;
         if (!webhookUrl) return; // Если вебхук не указан, ничего не делаем
+        if (!this.botInfo.pluginSettings.Synch?.webhook?.value) return;
 
         const type = this.botAPI.getType(message);
         const nick = this.botAPI.getNick(message, json);
@@ -29,7 +30,9 @@ class SynchPlugin {
             const safeNick = this.escapeDiscordMarkdown(nick);
             const safeMessage = this.escapeDiscordMarkdown(text);
 
-            this.messageBuffer.push(`**[${type.charAt(0).toUpperCase()}] ${safeNick}**: ${safeMessage}`);
+            this.messageBuffer.push(this.botInfo.pluginSettings.Synch.message.value.replace("{nick}", safeNick).
+            replace("{type}", type).
+            replace("{message}", safeMessage));
 
             if (this.messageBuffer.length >= 5 && !this.isSending) {
                 await this.sendBuffer();

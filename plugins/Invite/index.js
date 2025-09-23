@@ -8,6 +8,12 @@ class InvitePlugin {
 
     onMessage(message, json) {
         const text = this.botAPI.getText(message);
+        if (message.includes('подал заявку на вступление в ваш клан.')) //| Игрок NICK подал заявку на вступление в ваш клан.
+        {
+            console.log(message);
+            this.botAPI.sendMessage(this.bot, 'cmd', '/c accept ' + message.split(' ')[2])
+            return;
+        }
         if (text === 'none' || !text.startsWith('@invite')) {
             return;
         }

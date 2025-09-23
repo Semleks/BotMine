@@ -5,6 +5,10 @@
     "webhook": {
       "label": "URL вебхука из Discord",
       "value": ""
+    },
+    "message": {
+      "label": "Введите сообщение, который будет приходить. Используйте: {nick} - ник игрока. {type} - тип чата (global, local). {message} - сообщение. \\n - перенос на новую строку",
+      "value": "{type}: {nick}: {message}"
     }
   }
 }

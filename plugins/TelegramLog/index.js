@@ -21,7 +21,9 @@ class TelegramLog {
         if (type === "none" || nick === "none") 
             return;
 
-        const chatText = type + ": " + nick + ": " + this.botAPI.getText(message);
+        const chatText = this.botInfo.pluginSettings.TelegramLog.message.value.replace("{nick}", nick).
+        replace("{type}", type).
+        replace("{message}", this.botAPI.getText(message));
 
         const botToken = settings.botToken.value;
         const chatId = settings.chatId.value;
