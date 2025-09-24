@@ -288,18 +288,32 @@ wss.on("connection", (ws) => {
                     const text = jsonMsg.toString();
                     if (ws.readyState === ws.OPEN) {
                         ws.send(JSON.stringify({ type: "chat", message: text }));
-                    }   
-                    
+                    }
+
                     if (text.includes("dev")) {
                         bot.chat('/cc Этот бот создан с помощью BotMine!');
                     }
-                    
+
                     Object.values(pluginLoader.loadedPlugins).forEach(pluginInstance => {
                         if (pluginInstance.onMessage) {
                             try {
                                 pluginInstance.onMessage(text, jsonMsg);
                             } catch (e) {
                                 console.error(`[SERVER] Ошибка в onMessage плагина ${pluginInstance.constructor.name}:`, e);
+                            }
+                        }
+                    });
+                });
+
+                bot.on('playerJoined', (player) => {
+                    //console.log(`[LOG] onPlayerJoined вызван для игрока: ${player.username}`);
+
+                    Object.values(pluginLoader.loadedPlugins).forEach(pluginInstance => {
+                        if (pluginInstance.onPlayerJoined) {
+                            try {
+                                pluginInstance.onPlayerJoined(player);
+                            } catch (e) {
+                                console.error(`[SERVER] Ошибка в onPlayerJoined плагина ${pluginInstance.constructor.name}:`, e);
                             }
                         }
                     });

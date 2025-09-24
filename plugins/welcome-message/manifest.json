@@ -1,0 +1,14 @@
+{
+  "name": "WelcomeMessage",
+  "description": "Приветствует указанного игрока при заходе на сервер.",
+  "defaultSettings": {
+    "targetUser": {
+      "label": "Ник игрока для приветствия",
+      "value": "dan111"
+    },
+    "message": {
+      "label": "Текст приветствия (используйте {username} для ника)",
+      "value": "Привет, {username}!"
+    }
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "name": "StatisticPlugin",
+  "description": "Плагин, который выдает статистику работы бота",
+  "defaultSettings": {
+    "nick": {
+      "label": "Админ-ник",
+      "value": ""
+    }
+  }
+}  

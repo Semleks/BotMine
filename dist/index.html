@@ -21,6 +21,7 @@
             --accent-blue: #7aa2f7;
             --accent-gray: #5c6370;
             --accent-orange: #e09f3e;
+            --accent-yellow: #ffc107; /* Добавим желтый для кнопки перезапуска */
             --accent-purple: #a78bfa;
             --accent-cyan: #8be9fd;
             --modal-bg: rgba(16, 16, 21, 0.8);
@@ -258,6 +259,7 @@
 
         #startBot { background-color: var(--accent-green); }
         #stopBot { background-color: var(--accent-red); }
+        #restartBot { background-color: var(--accent-yellow); color: #1a1b26; } /* Стиль для кнопки перезапуска */
         #openModalBtn { background-color: var(--accent-blue); }
         #sendMessage { background-color: var(--accent-gray); }
         #exportBotDataBtn { background-color: var(--accent-orange); }
@@ -283,6 +285,53 @@
             flex-wrap: wrap;
             gap: 10px;
         }
+
+        /* --- СТИЛИ ДЛЯ ШАПКИ КОНСОЛИ --- */
+        .chat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+            margin-bottom: 0; /* Убираем нижний отступ у h2 */
+        }
+        .chat-header h2 {
+            border-bottom: none; /* Убираем дублирующуюся линию */
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+        .status-indicator-console {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 1em;
+            font-weight: 500;
+        }
+        .status-indicator-console .dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            transition: background-color 0.3s ease;
+        }
+        .status-indicator-console.online .dot {
+            background-color: var(--accent-green);
+            animation: pulse 2s infinite;
+        }
+        .status-indicator-console.online .text {
+            color: var(--accent-green);
+        }
+        .status-indicator-console.offline .dot {
+            background-color: var(--accent-red);
+        }
+        .status-indicator-console.offline .text {
+            color: var(--accent-red);
+        }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(158, 206, 106, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(158, 206, 106, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(158, 206, 106, 0); }
+        }
+        /* --- КОНЕЦ СТИЛЕЙ --- */
 
         #logs {
             background: var(--bg-color);
@@ -411,7 +460,13 @@
     <div class="container">
         <!-- ВКЛАДКА "ГЛАВНЫЙ" -->
         <div id="main" class="tab-content active">
-            <h2><i class="fa-solid fa-comments"></i> Игровой чат</h2>
+            <div class="chat-header">
+                <h2><i class="fa-solid fa-comments"></i> Игровой чат</h2>
+                <div id="bot-console-status" class="status-indicator-console offline">
+                    <span class="dot"></span>
+                    <span class="text">Stopped</span>
+                </div>
+            </div>
             <div id="logs"></div>
             <div class="resizer" id="dragHandle"></div>
             <div class="message-input-container">
@@ -422,6 +477,7 @@
             <div class="controls-grid">
                 <button id="startBot"><i class="fa-solid fa-play"></i> Запустить</button>
                 <button id="stopBot" disabled><i class="fa-solid fa-stop"></i> Выключить</button>
+                <button id="restartBot" disabled><i class="fa-solid fa-arrows-rotate"></i> Перезапустить</button>
                 <button id="openModalBtn"><i class="fa-solid fa-pencil"></i> Изменить данные</button>
                 <button id="exportBotDataBtn"><i class="fa-solid fa-download"></i> Экспорт</button>
                 <input type="file" id="importFileInput" accept=".json" style="display: none;">
@@ -575,6 +631,7 @@
         const pluginDocModal = document.getElementById("pluginDocModal");
         const startBotBtn = document.getElementById("startBot");
         const stopBotBtn = document.getElementById("stopBot");
+        const restartBotBtn = document.getElementById("restartBot");
         const messageInput = document.getElementById("message");
         const sendMessageBtn = document.getElementById("sendMessage");
         const openBotModalBtn = document.getElementById("openModalBtn");
@@ -592,6 +649,8 @@
         const addMyPluginBtn = document.getElementById("addMyPluginBtn");
         const howToCreatePluginBtn = document.getElementById("howToCreatePluginBtn");
         const pluginZipInput = document.getElementById("pluginZipInput");
+        const botConsoleStatus = document.getElementById("bot-console-status");
+
 
         // --- УЛУЧШЕННЫЙ КОД ДЛЯ ИЗМЕНЕНИЯ РАЗМЕРА КОНСОЛИ ---
         const dragHandle = document.getElementById('dragHandle');
@@ -735,8 +794,14 @@
                 statusIndicator.classList.toggle('offline', !botData.botIsRunning);
             }
 
+            // Обновление индикатора в консоли
+            botConsoleStatus.classList.toggle('online', botData.botIsRunning);
+            botConsoleStatus.classList.toggle('offline', !botData.botIsRunning);
+            botConsoleStatus.querySelector('.text').textContent = botData.botIsRunning ? 'Running' : 'Stopped';
+
             startBotBtn.disabled = botData.botIsRunning;
             stopBotBtn.disabled = !botData.botIsRunning;
+            restartBotBtn.disabled = !botData.botIsRunning;
             messageInput.disabled = !botData.botIsRunning;
             sendMessageBtn.disabled = !botData.botIsRunning;
             updatePluginButtons();
@@ -790,6 +855,14 @@
 
         startBotBtn.onclick = () => sendWsMessage('startBot');
         stopBotBtn.onclick = () => sendWsMessage('stopBot');
+        restartBotBtn.onclick = () => {
+            logWithType("status", "Перезапускаю бота...");
+            sendWsMessage('stopBot');
+            setTimeout(() => {
+                sendWsMessage('startBot');
+            }, 1500); // Задержка в 1.5 секунды
+        };
+
         sendMessageBtn.onclick = () => {
             if (messageInput.value.trim()) {
                 sendWsMessage('sendMessage', { message: messageInput.value });
