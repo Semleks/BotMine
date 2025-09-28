@@ -1,3 +1,8 @@
+# Botmine
+
+[![GitHub last commit](https://img.shields.io/github/last-commit/Semleks/Botmine?style=for-the-badge)](https://github.com/Semleks/Botmine/commits/main)
+[![GitHub Repo stars](https://img.shields.io/github/stars/Semleks/Botmine?style=for-the-badge)](https://github.com/Semleks/Botmine/stargazers)
+
 # BotMine
 BotMine — это open-source решение для централизованного управления и автоматизации ботов Minecraft. Запускайте ботов, управляйте ими в реальном времени, расширяйте их возможности с помощью плагинов и создавайте сложные сценарии поведения в визуальном редакторе.
 ## 🚀 Ключевые возможности
