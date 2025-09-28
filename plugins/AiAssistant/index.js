@@ -36,7 +36,7 @@ class AiAssistantPlugin {
 
             try {
                 const response = await this.ai.NewQuestion(text, nick, promt, apiKey, host, port);
-                this.botAPI.sendMessage(this.bot, type, response, nick);
+                this.botAPI.sendMessage(this.bot, type, `&a${nick} &f` + response, nick);
             } catch (e) {
                 console.error('[AiAssistantPlugin] Ошибка при запросе к Gemini API:', e);
                 this.botAPI.sendMessage(this.bot, type, 'У меня что-то с головой... не могу сейчас ответить.', nick);

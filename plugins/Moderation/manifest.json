@@ -1,0 +1,18 @@
+{
+  "name": "Moderation",
+  "description": "Полная модерация клана. ВСЕМ СОВЕТУЮ УСТАНОВИТЬ",
+  "defaultSettings": {
+    "nick": {
+      "label": "Ник админа",
+      "value": ""
+    },
+    "banMessage": {
+      "label": "Сообщение о бане. {banned} - ник, кого забанили. {moder} - ник, кто забанил. {reason} - причина",
+      "value": "&7[&c&l!&7] &fИгрок &a{banned}&f был забанен модератором&c {moder}&f. Причина: &e{reason}"
+    },
+    "intMessages": {
+      "label": "Количество однотипных сообщений для наказания.",
+      "value": "5"
+    }
+  }
+}

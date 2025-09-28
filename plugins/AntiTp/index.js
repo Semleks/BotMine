@@ -7,7 +7,6 @@ class AntiTpPlugin {
     }
 
     onMessage(message, json) {
-        // Ищем в сообщении ключевые фразы, указывающие на телепортацию
         if (message.includes('Перемещение на') || message.includes("телепортировал вас к")) {
             try {
                 const commandToExecute = this.botInfo.pluginSettings.AntiTp?.command?.value;
@@ -20,7 +19,6 @@ class AntiTpPlugin {
 
                 if (commandToExecute) {
                     console.log(`[AntiTpPlugin] Обнаружена телепортация. Выполняю команду: ${commandToExecute}`);
-                    // Добавляем небольшую задержку, чтобы команда выполнилась уже после телепортации
                     setTimeout(() => {
                         this.botAPI.sendMessage(this.bot, 'cmd', commandToExecute);
                     }, 1000); // 1 секунда

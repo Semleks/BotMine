@@ -3,1028 +3,652 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BotMine - Управление ботом</title>
-    <!-- Google Font: Poppins -->
+    <title>BotMine - Панель управления</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Font Awesome -->
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <style>
         :root {
-            --bg-color: #1a1b26;
-            --surface-color: #24283b;
-            --text-color: #c0caf5;
-            --border-color: #414868;
-            --accent-green: #9ece6a;
-            --accent-red: #f7768e;
-            --accent-blue: #7aa2f7;
-            --accent-gray: #5c6370;
-            --accent-orange: #e09f3e;
-            --accent-yellow: #ffc107; /* Добавим желтый для кнопки перезапуска */
-            --accent-purple: #a78bfa;
-            --accent-cyan: #8be9fd;
-            --modal-bg: rgba(16, 16, 21, 0.8);
-            --shadow-light: rgba(0, 0, 0, 0.2);
-            --shadow-medium: rgba(0, 0, 0, 0.35);
-            --shadow-heavy: rgba(0, 0, 0, 0.5);
-            --doc-keyword: #a78bfa;
-            --doc-variable: #9ece6a;
-            --doc-string: #f7768e;
-            --doc-comment: #5c6370;
-            --doc-json-key: #7aa2f7;
-            --doc-type: #8be9fd;
-            --doc-important: #f7768e;
+            --bg-main: #0E0E10;
+            --bg-sidebar: #131316;
+            --bg-content: #18181B;
+            --bg-widget: #1F1F23;
+            --bg-widget-hover: #242428;
+            --border-color: #2A2A2E;
+            --text-primary: #EFEFF1;
+            --text-secondary: #A0A0AB;
+            --text-tertiary: #70707A;
+            --accent-purple: #9147FF;
+            --accent-green: #00F593;
+            --accent-red: #F44336;
+            --accent-blue: #00A3FF;
+            --font-family: 'Manrope', sans-serif;
         }
+        * { box-sizing: border-box; }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-content); }
+        ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
 
         body {
-            background-color: #000;
-            color: var(--text-color);
-            font-family: 'Poppins', sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-primary);
+            font-family: var(--font-family);
             margin: 0;
-            padding: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            text-align: center;
-            /* Prevent text selection during drag */
-        }
-
-        body.resizing {
-            user-select: none;
-        }
-
-        .page {
-            display: none;
-            width: 100%;
-            height: 100vh;
-            animation: fadeIn 0.5s ease-out;
-        }
-        .page.active {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        #bot-selection-page {
-            padding: 20px;
-        }
-        #bot-selection-page h1 {
-            font-size: 2.5em;
-            font-weight: 600;
-            color: #fff;
-            margin-bottom: 1rem;
-        }
-        #bot-selection-page h2 {
-            font-size: 1.5em;
-            font-weight: 400;
-            color: var(--accent-gray);
-            margin-bottom: 3rem;
-        }
-        .bot-list {
-            display: flex;
-            justify-content: center;
-            gap: 2rem;
-        }
-        .bot-card {
-            background: #111;
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 2rem;
-            min-width: 300px;
-            cursor: pointer;
-            transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
-            text-align: left;
-            position: relative;
-        }
-        .bot-card:hover {
-            transform: translateY(-10px);
-            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.5);
-            border-color: var(--accent-blue);
-        }
-        .bot-card .status-indicator {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            width: 15px;
-            height: 15px;
-            border-radius: 50%;
-            transition: background-color 0.3s ease;
-        }
-        .bot-card .status-indicator.online {
-            background-color: var(--accent-green);
-            box-shadow: 0 0 10px var(--accent-green);
-        }
-        .bot-card .status-indicator.offline {
-            background-color: var(--accent-gray);
-        }
-        .bot-card .bot-nick {
-            font-size: 1.8em;
-            font-weight: 600;
-            color: #fff;
-            margin: 0 0 5px 0;
-        }
-        .bot-card .bot-ip {
-            font-size: 1em;
-            color: var(--accent-gray);
-            margin: 0;
-        }
-        #create-first-bot-btn {
-            background-color: var(--accent-blue);
-            font-size: 1.2em;
-            padding: 15px 30px;
-            display: none;
-        }
-
-        #bot-management-page {
-            max-width: 1200px;
-            width: 100%;
-            height: 100vh;
-            padding: 20px;
-            box-sizing: border-box;
-        }
-        .management-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            width: 100%;
-            padding: 0 1rem;
-            margin-bottom: 1.5rem;
-            box-sizing: border-box;
-        }
-        .management-header .back-btn {
-            background: none;
-            border: 1px solid var(--border-color);
-            color: var(--text-color);
-            font-size: 1em;
-            padding: 10px 15px;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: background-color 0.2s ease, color 0.2s ease;
-        }
-        .management-header .back-btn:hover {
-            background-color: var(--border-color);
-            color: #fff;
-        }
-        .management-nav {
-            display: flex;
-            gap: 10px;
-            background-color: var(--surface-color);
-            padding: 8px;
-            border-radius: 10px;
-        }
-        .management-nav .nav-btn {
-            background: transparent;
-            border: none;
-            color: var(--text-color);
-            padding: 10px 20px;
-            font-size: 1em;
-            font-weight: 500;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: background-color 0.2s ease, color 0.2s ease;
-        }
-        .management-nav .nav-btn.active,
-        .management-nav .nav-btn:hover {
-            background-color: var(--accent-blue);
-            color: #fff;
-        }
-        .container {
-            width: 100%;
-            height: calc(100vh - 120px);
-            background-color: var(--surface-color);
-            border-radius: 12px;
-            box-shadow: 0 10px 30px var(--shadow-heavy);
-            padding: 30px;
-            display: flex;
-            flex-direction: column;
+            font-size: 14px;
             overflow: hidden;
-            box-sizing: border-box;
         }
-        .tab-content {
-            display: none;
-            height: 100%;
-            overflow-y: auto;
-            text-align: left;
-        }
-        .tab-content.active { display: block; }
-        .tab-content::-webkit-scrollbar { width: 8px; }
-        .tab-content::-webkit-scrollbar-track { background: var(--bg-color); border-radius: 10px; }
-        .tab-content::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 10px; }
-        .tab-content::-webkit-scrollbar-thumb:hover { background: var(--accent-gray); }
-        #main {
+        .app-wrapper { display: flex; height: 100vh; }
+        .page { display: none; }
+        .page.active { display: block; }
+        h1, h2, h3, h4, p { margin: 0; }
+
+        .sidebar {
+            width: 240px;
+            background-color: var(--bg-sidebar);
             display: flex;
             flex-direction: column;
-            gap: 20px;
-            height: 100%;
+            padding: 20px 15px;
+            border-right: 1px solid var(--border-color);
         }
+        .sidebar-header {
+            display: flex; align-items: center; gap: 12px;
+            padding: 0 10px 20px 10px;
+        }
+        .sidebar-header i { font-size: 24px; color: var(--accent-purple); }
+        .sidebar-header h1 { font-size: 20px; font-weight: 700; }
 
-        h1, h2, h3, h4 {
-            text-align: left;
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 10px;
-            color: white;
-            font-weight: 500;
-            margin: 0 0 20px 0;
+        .sidebar-nav { list-style: none; padding: 0; margin: 0; }
+        .sidebar-nav .nav-link {
+            display: flex; align-items: center; gap: 12px;
+            padding: 10px; margin-bottom: 5px; border-radius: 6px;
+            text-decoration: none; color: var(--text-secondary);
+            font-weight: 600; cursor: pointer;
+            transition: background-color .2s ease, color .2s ease;
         }
-        h3 {
-            margin-top: 15px;
-        }
+        .sidebar-nav .nav-link:hover { color: var(--text-primary); background-color: var(--bg-widget); }
+        .sidebar-nav .nav-link.active { color: var(--text-primary); background-color: var(--accent-purple); }
+        .sidebar-nav .nav-link i { font-size: 16px; width: 20px; text-align: center; }
 
-        button {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            color: #fff;
-            border: none;
-            border-radius: 8px;
-            padding: 12px 20px;
-            margin: 5px;
-            cursor: pointer;
-            font-size: 15px;
-            font-weight: 600;
-            transition: all 0.2s ease;
-            box-shadow: 0 4px 10px var(--shadow-light);
+        .section-title {
+            font-size: 12px; font-weight: 700; color: var(--text-tertiary);
+            text-transform: uppercase; padding: 20px 10px 10px;
         }
-        button i { margin-right: 8px; }
-        button:hover:not(:disabled) { transform: translateY(-3px); box-shadow: 0 6px 15px var(--shadow-medium); }
-        button:active:not(:disabled) { transform: translateY(0); box-shadow: 0 2px 5px var(--shadow-light); }
-        button:disabled { cursor: not-allowed; opacity: 0.6; box-shadow: none; }
+        .sidebar-bot-list .bot-item {
+            display: flex; align-items: center; gap: 10px;
+            padding: 10px; border-radius: 6px; cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .bot-item:hover { background-color: var(--bg-widget); }
+        .bot-item .status-dot { width: 8px; height: 8px; border-radius: 50%; }
+        .bot-item .status-dot.offline { background-color: var(--text-tertiary); }
+        .bot-info h4 { font-size: 14px; font-weight: 600; }
+        .bot-info p { font-size: 12px; color: var(--text-secondary); }
+        .sidebar-footer { margin-top: auto; padding: 0 5px; }
 
-        #startBot { background-color: var(--accent-green); }
-        #stopBot { background-color: var(--accent-red); }
-        #restartBot { background-color: var(--accent-yellow); color: #1a1b26; } /* Стиль для кнопки перезапуска */
-        #openModalBtn { background-color: var(--accent-blue); }
-        #sendMessage { background-color: var(--accent-gray); }
-        #exportBotDataBtn { background-color: var(--accent-orange); }
-        #importBotDataBtn { background-color: var(--accent-purple); }
-        #whatsNewBtn { background-color: var(--accent-cyan); }
-        #createBotBtn, #saveSettingsBtn { background-color: var(--accent-green); width: calc(100% - 10px); }
-
-        input[type="text"], input[type="password"] {
-            background-color: var(--bg-color);
-            border: 1px solid var(--border-color);
-            color: var(--text-color);
-            padding: 12px;
-            margin: 8px 0;
-            border-radius: 8px;
-            width: calc(100% - 24px);
-            font-size: 15px;
-            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+                box-shadow: 0 0 0 0 rgba(0, 245, 147, 0.7);
+            }
+            70% {
+                transform: scale(1.1);
+                box-shadow: 0 0 10px 10px rgba(0, 245, 147, 0);
+            }
+            100% {
+                transform: scale(1);
+                box-shadow: 0 0 0 0 rgba(0, 245, 147, 0);
+            }
         }
-        input:focus { outline: none; border-color: var(--accent-blue); box-shadow: 0 0 0 3px rgba(122, 162, 247, 0.3); }
-
-        .controls-grid {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-
-        /* --- СТИЛИ ДЛЯ ШАПКИ КОНСОЛИ --- */
-        .chat-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 10px;
-            margin-bottom: 0; /* Убираем нижний отступ у h2 */
-        }
-        .chat-header h2 {
-            border-bottom: none; /* Убираем дублирующуюся линию */
-            margin-bottom: 0;
-            padding-bottom: 0;
-        }
-        .status-indicator-console {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 1em;
-            font-weight: 500;
-        }
-        .status-indicator-console .dot {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            transition: background-color 0.3s ease;
-        }
-        .status-indicator-console.online .dot {
+        .bot-item .status-dot.online {
             background-color: var(--accent-green);
             animation: pulse 2s infinite;
         }
-        .status-indicator-console.online .text {
-            color: var(--accent-green);
+
+        .main-container { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+        .main-header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 20px 30px; flex-shrink: 0;
+            border-bottom: 1px solid var(--border-color);
         }
-        .status-indicator-console.offline .dot {
-            background-color: var(--accent-red);
+        .header-title .main-icon {
+            font-size: 24px; padding: 10px; border-radius: 8px;
+            background-color: #3e207a; color: var(--accent-purple);
+            margin-right: 15px;
         }
-        .status-indicator-console.offline .text {
-            color: var(--accent-red);
+        .header-title h2 { font-size: 24px; font-weight: 800; }
+        .header-title p { color: var(--text-secondary); }
+        .header-actions { display: flex; gap: 10px; }
+        .header-actions.hidden { display: none; }
+        .content-wrapper { padding: 30px; overflow-y: auto; height: 100%; }
+
+        .right-sidebar {
+            width: 320px; background-color: var(--bg-sidebar);
+            padding: 20px; border-left: 1px solid var(--border-color);
         }
-        @keyframes pulse {
-            0% { box-shadow: 0 0 0 0 rgba(158, 206, 106, 0.7); }
-            70% { box-shadow: 0 0 0 10px rgba(158, 206, 106, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(158, 206, 106, 0); }
+        .widget { background-color: var(--bg-widget); padding: 20px; border-radius: 12px; border: 1px solid var(--border-color); }
+        .widget-header { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; }
+        .widget-header i { color: var(--accent-green); }
+        .widget-header h3 { font-size: 16px; font-weight: 700; }
+        .resource-item { background: var(--bg-content); padding: 15px; border-radius: 8px; }
+        .resource-item .bot-name { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .resource-item .bot-name h4 { font-size: 15px; font-weight: 600; }
+        .resource-usage { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+        .resource-usage i { color: var(--text-tertiary); font-size: 16px; }
+        .resource-usage .info .label { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 5px; }
+        .progress-bar { height: 6px; background-color: var(--bg-main); border-radius: 3px; overflow: hidden; }
+        .progress-bar div { height: 100%; background-color: var(--accent-green); border-radius: 3px; width: 0%; transition: width 0.5s ease; }
+
+        #dashboard-page .dashboard-grid { display: grid; grid-template-columns: 300px 1fr; gap: 30px; }
+        .stats-card { display: flex; flex-direction: column; gap: 15px; }
+        .stats-item { background: var(--bg-widget); padding: 20px; border-radius: 12px; border: 1px solid var(--border-color); }
+        .stats-item p { color: var(--text-secondary); font-weight: 500; margin-bottom: 5px; }
+        .stats-item .value { font-size: 28px; font-weight: 800; }
+        .stats-item .value.total { color: var(--accent-blue); }
+        .stats-item .value.running { color: var(--accent-green); }
+        .stats-item .value.stopped { color: var(--text-tertiary); }
+        .quick-manage-table table { width: 100%; border-collapse: collapse; }
+        .quick-manage-table th, .quick-manage-table td { padding: 15px; text-align: left; border-bottom: 1px solid var(--border-color); }
+        .quick-manage-table th { font-size: 12px; color: var(--text-secondary); text-transform: uppercase; }
+        .quick-manage-table td .status-tag { padding: 4px 10px; border-radius: 15px; font-weight: 600; font-size: 12px; }
+        .quick-manage-table td .status-tag.running { background-color: rgba(0, 245, 147, 0.1); color: var(--accent-green); }
+        .quick-manage-table td .status-tag.stopped { background-color: rgba(112, 112, 122, 0.15); color: var(--text-tertiary); }
+
+        .bot-management-tabs { display: flex; gap: 20px; border-bottom: 1px solid var(--border-color); margin-bottom: 20px; }
+        .bot-management-tabs .tab-btn {
+            background: none; border: none; color: var(--text-secondary);
+            padding: 10px 5px 15px 5px; cursor: pointer; font-size: 16px; font-weight: 600;
+            border-bottom: 2px solid transparent;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
         }
-        /* --- КОНЕЦ СТИЛЕЙ --- */
+        .bot-management-tabs .tab-btn.active { color: var(--accent-purple); border-bottom-color: var(--accent-purple); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        #console-content {
+            height: calc(100vh - 250px);
+        }
+        #console-content.active {
+            display: flex;
+            flex-direction: column;
+        }
 
         #logs {
-            background: var(--bg-color);
-            color: var(--text-color);
-            padding: 18px;
-            height: 250px; /* Начальная высота */
-            min-height: 60px; /* Минимальная высота */
-            flex-shrink: 0; /* Предотвращаем сжатие flex-контейнером */
-            overflow-y: auto;
-            border-radius: 10px;
-            border: 1px solid var(--border-color);
-            font-family: 'Fira Code', 'Courier New', monospace;
-            font-size: 14px;
-            line-height: 1.6;
-            box-shadow: inset 0 2px 8px var(--shadow-light);
-            word-break: break-all;
+            background: var(--bg-main); color: var(--text-secondary);
+            padding: 15px; height: 100%; overflow-y: auto;
+            border-radius: 8px; border: 1px solid var(--border-color);
+            margin-bottom: 15px; font-family: 'Courier New', monospace; font-size: 14px;
         }
-
-        /* --- НОВЫЕ УЛУЧШЕННЫЕ СТИЛИ ДЛЯ РЕСАЙЗЕРА --- */
-        .resizer {
-            width: 100%;
-            height: 12px; /* Увеличена область для захвата */
-            background: transparent;
-            cursor: row-resize;
-            position: relative;
-            margin-top: -10px; /* Небольшое наложение для лучшего вида */
-            margin-bottom: 10px;
-        }
-        .resizer::after {
-            content: '';
-            position: absolute;
-            top: 5px; /* Позиционируем линию по центру */
-            left: 40%;
-            right: 40%;
-            height: 4px;
-            background-color: var(--border-color);
-            border-radius: 2px;
-            transition: background-color 0.2s ease;
-        }
-        .resizer:hover::after {
-            background-color: var(--accent-blue);
-        }
-        /* --- КОНЕЦ СТИЛЕЙ РЕСАЙЗЕРА --- */
-
-        #logs::-webkit-scrollbar { width: 8px; }
-        #logs::-webkit-scrollbar-track { background: var(--bg-color); border-radius: 10px; }
-        #logs::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 10px; }
-        #logs::-webkit-scrollbar-thumb:hover { background: var(--accent-gray); }
-
         .log-status { color: var(--accent-blue); }
         .log-info { color: var(--accent-green); }
         .log-error { color: var(--accent-red); font-weight: 600; }
-        .log-chat { color: var(--text-color); }
-
-        .message-input-container {
-            display: flex;
-            gap: 10px;
+        .log-chat { color: var(--text-primary); }
+        .message-input-container { display: flex; gap: 10px; }
+        input[type="text"], input[type="password"] {
+            background-color: var(--bg-content); border: 1px solid var(--border-color);
+            color: var(--text-primary); padding: 10px 15px; border-radius: 6px;
+            width: 100%; font-size: 14px; font-family: var(--font-family);
         }
-        .message-input-container input {
-            flex-grow: 1;
-            margin: 0;
-            width: auto;
-        }
-        .message-input-container button {
-            margin: 0;
-            flex-shrink: 0;
-        }
+        input:focus { outline: none; border-color: var(--accent-purple); }
 
-        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: var(--modal-bg); backdrop-filter: blur(8px); animation: modalFadeIn 0.3s ease-out; }
-        .modal-content { background-color: var(--surface-color); margin: 10% auto; padding: 30px; border: 1px solid var(--border-color); width: 90%; max-width: 500px; border-radius: 15px; position: relative; box-shadow: 0 10px 25px var(--shadow-heavy); animation: modalSlideIn 0.3s ease-out; }
-        @keyframes modalFadeIn { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes modalSlideIn { from { transform: translateY(-50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-        .close { color: var(--border-color); position: absolute; top: 15px; right: 20px; font-size: 32px; font-weight: normal; cursor: pointer; transition: color 0.2s ease, transform 0.2s ease; }
-        .close:hover { color: var(--accent-red); transform: rotate(90deg); }
-
-        .plugins-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 25px; margin-top: 20px; }
-        .plugin-card { background-color: var(--bg-color); border-radius: 12px; padding: 25px; border: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 12px; transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease; position: relative; box-shadow: 0 5px 15px var(--shadow-light); }
-        .plugin-card:hover { transform: translateY(-8px); box-shadow: 0 12px 25px var(--shadow-medium); border-color: var(--accent-blue); }
-        .plugin-card.active { border-left: 5px solid var(--accent-green); background-color: #2a3044; }
-        .plugin-card h4 { margin: 0 0 5px 0; color: white; border-bottom: none; padding-bottom: 0; font-size: 1.2em; }
-        .plugin-card p { margin: 0; font-size: 14px; flex-grow: 1; line-height: 1.6; color: #a9b1d6; }
-        .plugin-toggle-btn { width: calc(100% - 10px); margin-left: 0; margin-right: 0; align-self: center; }
-        .plugin-toggle-btn.load { background-color: var(--accent-green); }
-        .plugin-toggle-btn.remove { background-color: var(--accent-red); }
-        .plugin-settings-btn { position: absolute; top: 15px; right: 15px; font-size: 20px; color: var(--border-color); cursor: pointer; transition: color 0.2s, transform 0.2s; display: none; }
-        .plugin-settings-btn:hover { color: var(--accent-blue); transform: rotate(90deg); }
+        .plugins-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+        .plugin-card {
+            background-color: var(--bg-widget); border-radius: 8px;
+            padding: 20px; border: 1px solid var(--border-color);
+            display: flex; flex-direction: column; gap: 10px; position: relative;
+        }
+        .plugin-card.active { border-left: 3px solid var(--accent-green); }
+        .plugin-card h4 { font-size: 16px; font-weight: 700; }
+        .plugin-card p { font-size: 13px; flex-grow: 1; color: var(--text-secondary); }
+        .plugin-controls { display: flex; gap: 10px; margin-top: 10px; }
+        .plugin-toggle-btn.load { background-color: var(--accent-green); border-color: var(--accent-green); color: #000; }
+        .plugin-settings-btn {
+            position: absolute; top: 15px; right: 15px;
+            color: var(--text-tertiary); cursor: pointer; font-size: 16px;
+            padding: 5px; display: none;
+        }
         .plugin-card.active .plugin-settings-btn { display: block; }
-        .settings-field { display: flex; flex-direction: column; margin-bottom: 10px; text-align: left; }
-        .settings-field label { margin-bottom: 5px; font-size: 14px; color: #a9b1d6; font-weight: 500; }
+        .plugin-settings-btn:hover { color: var(--text-primary); }
 
-        #whatsNewModal .modal-content { max-width: 600px; height: 70vh; }
-        #whatsNewCommits { overflow-y: auto; padding-right: 10px; flex-grow: 1; margin-top: 15px; border-top: 1px solid var(--border-color); padding-top: 15px; text-align: left;}
-        .commit-item { background-color: var(--bg-color); padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid var(--accent-cyan); text-align: left;}
+        button {
+            display: inline-flex; align-items: center; justify-content: center;
+            border: 1px solid var(--border-color); background-color: var(--bg-widget);
+            color: var(--text-primary); border-radius: 6px; padding: 10px 18px;
+            cursor: pointer; font-size: 14px; font-weight: 600; transition: all .2s ease;
+        }
+        button:hover:not(:disabled) { background-color: var(--bg-widget-hover); }
+        button:disabled { cursor: not-allowed; opacity: .5; }
+        button i { margin-right: 8px; }
+        .btn-primary { background-color: var(--accent-green); border-color: var(--accent-green); color: #000; }
+        .btn-danger { background-color: var(--accent-red); border-color: var(--accent-red); color: #fff; }
 
-        #pluginDocModal .modal-content { max-width: 700px; height: 80vh; overflow-y: auto; text-align: left; }
-        .documentation-content code, .documentation-content pre { font-family: 'Fira Code', 'Courier New', Courier, monospace; background-color: var(--bg-color); border-radius: 6px; padding: 2px 6px; font-size: 0.95em; text-align: left; }
-        .documentation-content pre { padding: 15px; overflow-x: auto; border: 1px solid var(--border-color); margin: 15px 0; }
+        .modal {
+            position: fixed;
+            z-index: 2001; /* FIX: Increased z-index to appear above the overlay */
+            left: 0; top: 0;
+            width: 100%; height: 100%; background-color: rgba(0,0,0,0.7);
+            backdrop-filter: blur(5px); display: flex; justify-content: center; align-items: center;
+            opacity: 0; visibility: hidden; transition: opacity 0.3s, visibility 0.3s;
+        }
+        .modal.active { opacity: 1; visibility: visible; }
+        .modal-content {
+            background-color: var(--bg-content); padding: 30px;
+            border: 1px solid var(--border-color); width: 90%; max-width: 450px;
+            border-radius: 12px; position: relative;
+            transform: scale(0.95); transition: transform 0.3s;
+        }
+        .modal.active .modal-content { transform: scale(1); }
+        .modal-content h2 { font-size: 20px; margin-bottom: 20px; }
+        .modal-content .close { position: absolute; top: 15px; right: 20px; color: var(--text-secondary); font-size: 24px; cursor: pointer; }
+
+        .hidden {
+            display: none !important;
+        }
+        #initial-setup-overlay {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            background-color: var(--bg-main);
+            z-index: 2000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            gap: 20px;
+        }
+        #initial-create-btn {
+            font-size: 22px;
+            padding: 20px 40px;
+            border-radius: 12px;
+        }
     </style>
 </head>
 <body>
 
-<!-- ЭКРАН 1: ВЫБОР БОТА -->
-<div id="bot-selection-page" class="page active">
-    <h1>BotMine</h1>
-    <h2>Создай бота без знаний программирования</h2>
-    <div class="bot-list">
-        <div class="bot-card" id="main-bot-card">
-            <div class="status-indicator offline" id="bot-status-indicator"></div>
-            <h3 class="bot-nick" id="bot-card-nick">Бот не настроен</h3>
-            <p class="bot-ip" id="bot-card-server">Нажмите, чтобы управлять</p>
-        </div>
-    </div>
-    <button id="create-first-bot-btn"><i class="fa-solid fa-plus"></i> Создать бота</button>
+<div id="initial-setup-overlay" class="hidden">
+    <div class="sidebar-header"><i class="fa-solid fa-cubes-stacked"></i><h1>BotMine</h1></div>
+    <button id="initial-create-btn" class="btn-primary"><i class="fa-solid fa-plus"></i>Создать бота</button>
 </div>
 
-<!-- ЭКРАН 2: УПРАВЛЕНИЕ БОТОМ -->
-<div id="bot-management-page" class="page">
-    <header class="management-header">
-        <button id="back-to-selection" class="back-btn"><i class="fa-solid fa-arrow-left"></i> Назад</button>
-        <nav class="management-nav">
-            <button class="nav-btn active" data-tab="main"><i class="fa-solid fa-terminal"></i> Главный</button>
-            <button class="nav-btn" data-tab="plugins"><i class="fa-solid fa-puzzle-piece"></i> Плагины</button>
-        </nav>
-    </header>
-
-    <div class="container">
-        <!-- ВКЛАДКА "ГЛАВНЫЙ" -->
-        <div id="main" class="tab-content active">
-            <div class="chat-header">
-                <h2><i class="fa-solid fa-comments"></i> Игровой чат</h2>
-                <div id="bot-console-status" class="status-indicator-console offline">
-                    <span class="dot"></span>
-                    <span class="text">Stopped</span>
+<div class="app-wrapper">
+    <aside class="sidebar">
+        <div class="sidebar-header"><i class="fa-solid fa-cubes-stacked"></i><h1>BotMine</h1></div>
+        <ul class="sidebar-nav">
+            <li><a class="nav-link active" id="nav-dashboard"><i class="fa-solid fa-table-cells-large"></i><span>Дашборд</span></a></li>
+        </ul>
+        <div class="section-title">Боты</div>
+        <div class="sidebar-bot-list">
+            <div class="bot-item" id="sidebar-bot-card">
+                <div class="status-dot offline" id="sidebar-bot-status-dot"></div>
+                <div class="bot-info">
+                    <h4 id="sidebar-bot-nick">...</h4>
+                    <p id="sidebar-bot-server">...</p>
                 </div>
             </div>
-            <div id="logs"></div>
-            <div class="resizer" id="dragHandle"></div>
-            <div class="message-input-container">
-                <input id="message" type="text" placeholder="Введите сообщение..." disabled>
-                <button id="sendMessage" disabled><i class="fa-solid fa-paper-plane"></i> Отправить</button>
+        </div>
+        <div class="sidebar-footer">
+            <button id="openModalBtn" style="width: 100%; margin-bottom: 10px;"><i class="fa-solid fa-gear"></i> Настроить бота</button>
+            <button id="addMyPluginBtn" style="width: 100%; margin-bottom: 10px;"><i class="fa-solid fa-plus-circle"></i> Добавить плагин</button>
+            <button id="importBotDataBtn" style="width: 100%;"><i class="fa-solid fa-upload"></i> Импорт</button>
+        </div>
+    </aside>
+
+    <main class="main-container">
+        <header class="main-header">
+            <div class="header-title">
+                <h2 id="main-header-title">Дашборд</h2>
+                <p id="main-header-subtitle">Общая сводка по вашей системе BotMine</p>
             </div>
-            <h3>Управление ботом</h3>
-            <div class="controls-grid">
-                <button id="startBot"><i class="fa-solid fa-play"></i> Запустить</button>
-                <button id="stopBot" disabled><i class="fa-solid fa-stop"></i> Выключить</button>
-                <button id="restartBot" disabled><i class="fa-solid fa-arrows-rotate"></i> Перезапустить</button>
-                <button id="openModalBtn"><i class="fa-solid fa-pencil"></i> Изменить данные</button>
-                <button id="exportBotDataBtn"><i class="fa-solid fa-download"></i> Экспорт</button>
-                <input type="file" id="importFileInput" accept=".json" style="display: none;">
-                <button id="importBotDataBtn"><i class="fa-solid fa-upload"></i> Импорт</button>
-                <button id="whatsNewBtn"><i class="fa-solid fa-sparkles"></i> Что нового?</button>
+            <div class="header-actions hidden">
+                <button id="startBot" class="btn-primary"><i class="fa-solid fa-play"></i> Запустить</button>
+                <button id="stopBot" class="btn-danger"><i class="fa-solid fa-stop"></i> Остановить</button>
+                <button id="restartBot"><i class="fa-solid fa-arrows-rotate"></i> Перезапустить</button>
+                <button id="exportBot"><i class="fa-solid fa-file-export"></i> Экспорт</button>
+                <button id="deleteBot" class="btn-danger"><i class="fa-solid fa-trash-can"></i> Удалить</button>
+            </div>
+        </header>
+
+        <div class="content-wrapper">
+            <div id="dashboard-page" class="page active">
+                <div class="dashboard-grid">
+                    <div class="stats-card">
+                        <div class="widget-header"><i class="fa-solid fa-chart-simple"></i><h3>Статистика системы</h3></div>
+                        <div class="stats-item"><p>Всего ботов</p><span class="value total" id="stats-total">0</span></div>
+                        <div class="stats-item"><p>Запущено</p><span class="value running" id="stats-running">0</span></div>
+                        <div class="stats-item"><p>Остановлено</p><span class="value stopped" id="stats-stopped">0</span></div>
+                    </div>
+                    <div class="quick-manage-table">
+                        <div class="widget-header"><i class="fa-solid fa-bolt"></i><h3>Быстрое управление</h3></div>
+                        <div class="widget">
+                            <table>
+                                <thead><tr><th>Бот</th><th>Статус</th><th>Действия</th></tr></thead>
+                                <tbody id="bot-table-body"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="bot-management-page" class="page">
+                <div class="bot-management-tabs">
+                    <button class="tab-btn active" data-tab="console-content"><i class="fa-solid fa-terminal"></i><span>Консоль</span></button>
+                    <button class="tab-btn" data-tab="plugins-content"><i class="fa-solid fa-puzzle-piece"></i><span>Плагины</span></button>
+                </div>
+                <div id="console-content" class="tab-content active">
+                    <div id="logs"></div>
+                    <div class="message-input-container">
+                        <input id="message" type="text" placeholder="Отправить сообщение в игровой чат..." disabled>
+                        <button id="sendMessage" disabled><i class="fa-solid fa-paper-plane"></i></button>
+                    </div>
+                </div>
+                <div id="plugins-content" class="tab-content">
+                    <div class="plugins-grid"></div>
+                </div>
             </div>
         </div>
+    </main>
 
-        <!-- ВКЛАДКА "ПЛАГИНЫ" -->
-        <div id="plugins" class="tab-content">
-            <h3>Доступные плагины</h3>
-            <div class="plugins-grid"></div>
-            <hr style="border-color: var(--border-color); margin: 30px 0;">
-            <h3>Управление своими плагинами</h3>
-            <div class="controls-grid" style="justify-content: center; margin-top: 15px;">
-                <button id="addMyPluginBtn" style="background-color: var(--accent-purple);"><i class="fa-solid fa-plus-circle"></i> Добавить свой плагин</button>
-                <button id="howToCreatePluginBtn" style="background-color: var(--accent-orange);"><i class="fa-solid fa-book"></i> Как создать свой плагин?</button>
+    <aside class="right-sidebar">
+        <div class="widget">
+            <div class="widget-header"><i class="fa-solid fa-chart-line"></i><h3>Мониторинг ресурсов</h3></div>
+            <div class="resource-item">
+                <div class="bot-name"><h4 id="resource-bot-nick">...</h4></div>
+                <div class="resource-usage">
+                    <i class="fa-solid fa-microchip"></i>
+                    <div class="info"><div class="label"><span>CPU</span><span id="cpu-usage-text">0.0%</span></div><div class="progress-bar"><div id="cpu-progress"></div></div></div>
+                </div>
+                <div class="resource-usage">
+                    <i class="fa-solid fa-memory"></i>
+                    <div class="info"><div class="label"><span>RAM</span><span id="ram-usage-text">0 MB</span></div><div class="progress-bar"><div id="ram-progress"></div></div></div>
+                </div>
             </div>
-            <input type="file" id="pluginZipInput" accept=".zip" style="display: none;">
         </div>
-    </div>
+    </aside>
 </div>
 
-<!-- Модальные окна -->
-<div id="botModal" class="modal">
-    <div class="modal-content">
-        <span class="close">&times;</span>
-        <h2>Создание / Изменение бота</h2>
-        <input type="text" id="modal_username" placeholder="Имя пользователя (username)">
-        <input type="password" id="modal_password" placeholder="Пароль (необязательно)">
-        <input type="text" id="modal_server" placeholder="Адрес сервера (host)">
-        <button id="createBotBtn"><i class="fa-solid fa-save"></i> Сохранить</button>
-    </div>
-</div>
-<div id="settingsModal" class="modal">
-    <div class="modal-content">
-        <span class="close">&times;</span>
-        <h2 id="settingsModalTitle">Настройки плагина</h2>
-        <div id="settingsModalBody"></div>
-        <button id="saveSettingsBtn"><i class="fa-solid fa-floppy-disk"></i> Сохранить</button>
-    </div>
-</div>
-<div id="whatsNewModal" class="modal">
-    <div class="modal-content">
-        <span class="close" id="closeWhatsNewModal">&times;</span>
-        <h2><i class="fa-solid fa-sparkles"></i> Что нового в BotMine?</h2>
-        <div id="whatsNewCommits"><p class="loading-text">Загрузка последних обновлений...</p></div>
-    </div>
-</div>
-<div id="pluginDocModal" class="modal">
-    <div class="modal-content">
-        <span class="close" id="closePluginDocModal">&times;</span>
-        <h2><i class="fa-solid fa-book"></i> Как создать свой плагин?</h2>
-        <div class="documentation-content">
-            <p>Привет, разработчик! Эта документация поможет быстро и легко сделать твой собственный плагин.</p>
-            <p>Структура плагина должна быть такой:</p>
-            <pre><code>
-<span class="doc-keyword">class</span> <span class="doc-variable">NamePlugin</span> {
-    <span class="doc-keyword">constructor</span>(<span class="doc-variable">bot</span>, <span class="doc-variable">botInfo</span>, <span class="doc-variable">botAPI</span>) {
-        <span class="doc-keyword">this</span>.<span class="doc-variable">botInfo</span> = <span class="doc-variable">botInfo</span>;
-        <span class="doc-keyword">this</span>.<span class="doc-variable">botAPI</span> = <span class="doc-variable">botAPI</span>;
-        <span class="doc-keyword">this</span>.<span class="doc-variable">bot</span> = <span class="doc-variable">bot</span>;
-        <span class="doc-variable">console</span>.<span class="doc-variable">log</span>(<span class="doc-string">'[NamePlugin] Плагин загружен.'</span>);
-    }
+<div id="botModal" class="modal"><div class="modal-content"><span class="close">&times;</span><h2>Настройка бота</h2><input type="text" id="modal_username" placeholder="Никнейм бота" style="margin-bottom: 15px;"><input type="text" id="modal_server" placeholder="Адрес сервера (ip:port)" style="margin-bottom: 15px;"><input type="password" id="modal_password" placeholder="Пароль (необязательно)"><button id="createBotBtn" class="btn-primary" style="width: 100%; margin-top: 20px;"><i class="fa-solid fa-save"></i> Сохранить</button></div></div>
+<div id="settingsModal" class="modal"><div class="modal-content"><span class="close">&times;</span><h2 id="settingsModalTitle">Настройки плагина</h2><div id="settingsModalBody"></div><button id="saveSettingsBtn" class="btn-primary" style="width: 100%; margin-top: 15px;"><i class="fa-solid fa-floppy-disk"></i> Сохранить</button></div></div>
 
-    <span class="doc-variable">onMessage</span>(<span class="doc-variable">message</span>, <span class="doc-variable">json</span>) {
-        <span class="doc-comment">// Твой код здесь</span>
-    }
-}
-
-<span class="doc-keyword">module</span>.<span class="doc-variable">exports</span> = <span class="doc-variable">NamePlugin</span>;
-            </code></pre>
-
-            <h3>Давай разберемся</h3>
-            <p>В методе <span class="doc-variable"><code>onMessage</code></span> тебе будет даваться текст из чата (который видит бот).</p>
-            <p>Пример: <code>› Игрок Владелец Dream123067 зашел на сервер.</code></p>
-            <p>Этот текст хранится в переменной <span class="doc-variable"><code>message</code></span>. Также у тебя есть <span class="doc-variable"><code>this.botAPI</code></span>. Там все самое нужное:</p>
-
-            <p><span class="doc-variable"><code>this.botAPI.sendMessage()</code></span> – этот метод позволяет тебе отправить сообщение в чат. У него есть параметры: <span class="doc-variable"><code>bot</code></span>, <span class="doc-variable"><code>type</code></span>, <span class="doc-variable"><code>text</code></span>, <span class="doc-variable"><code>nick</code></span>. Пример использования:</p>
-            <pre><code><span class="doc-variable">this</span>.<span class="doc-variable">botAPI</span>.<span class="doc-variable">sendMessage</span>(<span class="doc-variable">this</span>.<span class="doc-variable">bot</span>, <span class="doc-string">'clan'</span>, <span class="doc-string">"Привет!"</span>);</code></pre>
-            <p>Этот код напишет в клановый чат "Привет!". Типы чатов:</p>
-            <ul>
-                <li><span class="doc-type"><code>global</code></span> - глобальный</li>
-                <li><span class="doc-type"><code>local</code></span> - локальный</li>
-                <li><span class="doc-type"><code>private</code></span> - приватный</li>
-                <li><span class="doc-type"><code>cmd</code></span> - команда (отправить команду в консоль бота)</li>
-                <li><span class="doc-type"><code>clan</code></span> - клановый</li>
-            </ul>
-            <p>Если используешь <span class="doc-type"><code>private</code></span> - обязательно после сообщения добавь ник игрока. Пример:</p>
-            <pre><code><span class="doc-variable">this</span>.<span class="doc-variable">botAPI</span>.<span class="doc-variable">sendMessage</span>(<span class="doc-variable">this</span>.<span class="doc-variable">bot</span>, <span class="doc-string">'private'</span>, <span class="doc-string">"Как дела?"</span>, <span class="doc-variable">nick</span>);</code></pre>
-
-            <h3>Как получить ник игрока?</h3>
-            <p>Используй <span class="doc-variable"><code>botAPI</code></span>!</p>
-            <pre><code><span class="doc-variable">this</span>.<span class="doc-variable">botAPI</span>.<span class="doc-variable">getNick</span>(<span class="doc-variable">text</span>, <span class="doc-variable">json</span>); <span class="doc-comment">// Вернет настоящий ник игрока</span></code></pre>
-
-            <h3>Как получить Тип чата?</h3>
-            <pre><code><span class="doc-variable">this</span>.<span class="doc-variable">botAPI</span>.<span class="doc-variable">getType</span>(<span class="doc-variable">text</span>);</code></pre>
-
-            <h3>Как получить Текст?</h3>
-            <p>Убирает префиксы (например, <code>[G] Semleks Dream123067 -> ТЕСТ</code> дает: <code>ТЕСТ</code>).</p>
-            <pre><code><span class="doc-variable">this</span>.<span class="doc-variable">botAPI</span>.<span class="doc-variable">getText</span>(<span class="doc-variable">text</span>);</code></pre>
-
-            <h3>Манифест плагина</h3>
-            <p>У каждого плагина <span class="doc-important">ДОЛЖЕН ОБЯЗАТЕЛЬНО</span> быть манифест! Он выглядит так:</p>
-            <pre><code>
-{
-  <span class="doc-json-key">"name"</span>: <span class="doc-string">"Name"</span>,
-  <span class="doc-json-key">"description"</span>: <span class="doc-string">"Что делает плагин"</span>,
-  <span class="doc-json-key">"defaultSettings"</span>: {
-    <span class="doc-json-key">"message"</span>: {
-      <span class="doc-json-key">"label"</span>: <span class="doc-string">"Напиши .."</span>,
-      <span class="doc-json-key">"value"</span>: <span class="doc-string">""</span>
-    }
-  }
-}
-            </code></pre>
-            <ul>
-                <li><span class="doc-json-key"><code>name</code></span> - название плагина.</li>
-                <li><span class="doc-json-key"><code>description</code></span> - описание.</li>
-                <li><span class="doc-json-key"><code>message</code></span> - название подкатегории, что должен ввести пользователь (это можно изменить на любое другое имя, например, "greetingText").</li>
-                <li><span class="doc-json-key"><code>label</code></span> - это название поля, которое отобразится на сайте (например, "Типа введите сообщение").</li>
-                <li><span class="doc-json-key"><code>value</code></span> - будет значение, введенное пользователем.</li>
-            </ul>
-
-            <h3>Как использовать ввод пользователя (настройки плагина)?</h3>
-            <pre><code><span class="doc-variable">this</span>.<span class="doc-variable">botInfo</span>.<span class="doc-variable">pluginSettings</span>.<span class="doc-variable">Hi</span>?.<span class="doc-variable">message</span>?.<span class="doc-variable">value</span></code></pre>
-            <p>Вместо <span class="doc-variable"><code>Hi</code></span> подставьте <span class="doc-important">название вашего плагина</span> (как указано в поле <span class="doc-json-key"><code>"name"</code></span> из <span class="doc-variable"><code>manifest.json</code></span>).</p>
-            <p>Вместо <span class="doc-variable"><code>message</code></span> подставьте <span class="doc-important">название вашей подкатегории</span> из <span class="doc-json-key"><code>"defaultSettings"</code></span> (например, "greetingText").</p>
-
-            <p>Чтобы загрузить плагин, необходимо создать <span class="doc-important">ZIP-архив</span>. Внутри архива может быть сколько угодно файлов, но <span class="doc-important">ОБЯЗАТЕЛЬНЫМИ</span> должны быть два файла в корне архива:</p>
-            <ul>
-                <li><span class="doc-important"><code>index.js</code></span> - главный файл плагина с вашей логикой.</li>
-                <li><span class="doc-important"><code>manifest.json</code></span> - файл с метаданными и настройками плагина.</li>
-            </ul>
-        </div>
-    </div>
-</div>
+<input type="file" id="importFileInput" accept=".json" style="display:none">
+<input type="file" id="pluginZipInput" accept=".zip" style="display:none">
 
 <script>
     document.addEventListener('DOMContentLoaded', () => {
+        let ws, botData = {}, availablePlugins = {};
 
-        let ws;
-        let botData = { nick: "", server: "", activatedPlugins: [], pluginSettings: {}, botIsRunning: false };
-        let availablePlugins = {};
-        let messageBuffer = "";
-
-        const logsDiv = document.getElementById("logs");
-        const botModal = document.getElementById("botModal");
-        const settingsModal = document.getElementById("settingsModal");
-        const whatsNewModal = document.getElementById("whatsNewModal");
-        const pluginDocModal = document.getElementById("pluginDocModal");
-        const startBotBtn = document.getElementById("startBot");
-        const stopBotBtn = document.getElementById("stopBot");
-        const restartBotBtn = document.getElementById("restartBot");
-        const messageInput = document.getElementById("message");
-        const sendMessageBtn = document.getElementById("sendMessage");
-        const openBotModalBtn = document.getElementById("openModalBtn");
-        const exportBotDataBtn = document.getElementById("exportBotDataBtn");
-        const importBotDataBtn = document.getElementById("importBotDataBtn");
-        const importFileInput = document.getElementById("importFileInput");
-        const whatsNewBtn = document.getElementById("whatsNewBtn");
-        const botSelectionPage = document.getElementById('bot-selection-page');
-        const botManagementPage = document.getElementById('bot-management-page');
-        const mainBotCard = document.getElementById('main-bot-card');
-        const backToSelectionBtn = document.getElementById('back-to-selection');
-        const managementNav = document.querySelector('.management-nav');
-        const createFirstBotBtn = document.getElementById('create-first-bot-btn');
-        const botList = document.querySelector('.bot-list');
-        const addMyPluginBtn = document.getElementById("addMyPluginBtn");
-        const howToCreatePluginBtn = document.getElementById("howToCreatePluginBtn");
-        const pluginZipInput = document.getElementById("pluginZipInput");
-        const botConsoleStatus = document.getElementById("bot-console-status");
-
-
-        // --- УЛУЧШЕННЫЙ КОД ДЛЯ ИЗМЕНЕНИЯ РАЗМЕРА КОНСОЛИ ---
-        const dragHandle = document.getElementById('dragHandle');
-
-        dragHandle.addEventListener('mousedown', function(e) {
-            e.preventDefault(); // Предотвращаем стандартное поведение (например, выделение текста)
-
-            const startY = e.clientY;
-            const startHeight = logsDiv.offsetHeight;
-
-            document.body.classList.add('resizing');
-
-            function doDrag(e) {
-                const newHeight = startHeight + e.clientY - startY;
-                // Устанавливаем минимальную высоту, но не ограничиваем максимальную
-                logsDiv.style.height = `${Math.max(60, newHeight)}px`;
-            }
-
-            function stopDrag() {
-                document.removeEventListener('mousemove', doDrag);
-                document.removeEventListener('mouseup', stopDrag);
-                document.body.classList.remove('resizing');
-            }
-
-            document.addEventListener('mousemove', doDrag);
-            document.addEventListener('mouseup', stopDrag);
-        });
-        // --- КОНЕЦ КОДА ДЛЯ ИЗМЕНЕНИЯ РАЗМЕРА ---
-
-        mainBotCard.addEventListener('click', () => {
-            botSelectionPage.classList.remove('active');
-            botManagementPage.classList.add('active');
-        });
-        backToSelectionBtn.addEventListener('click', () => {
-            botManagementPage.classList.remove('active');
-            botSelectionPage.classList.add('active');
-        });
-        managementNav.addEventListener('click', (e) => {
-            const target = e.target.closest('.nav-btn');
-            if (target) openTab(target, target.dataset.tab);
-        });
-
-        function openTab(clickedBtn, tabName) {
-            document.querySelectorAll(".tab-content").forEach(tab => tab.classList.remove("active"));
-            document.querySelectorAll(".nav-btn").forEach(btn => btn.classList.remove("active"));
-            document.getElementById(tabName).classList.add("active");
-            clickedBtn.classList.add("active");
-        }
+        const elements = {
+            botModal: document.getElementById("botModal"),
+            settingsModal: document.getElementById("settingsModal"),
+            initialSetupOverlay: document.getElementById("initial-setup-overlay"),
+            initialCreateBtn: document.getElementById("initial-create-btn"),
+            startBotBtn: document.getElementById("startBot"),
+            stopBotBtn: document.getElementById("stopBot"),
+            restartBotBtn: document.getElementById("restartBot"),
+            exportBotBtn: document.getElementById("exportBot"),
+            deleteBotBtn: document.getElementById("deleteBot"),
+            messageInput: document.getElementById("message"),
+            sendMessageBtn: document.getElementById("sendMessage"),
+            openModalBtn: document.getElementById("openModalBtn"),
+            importBotDataBtn: document.getElementById("importBotDataBtn"),
+            importFileInput: document.getElementById("importFileInput"),
+            addMyPluginBtn: document.getElementById("addMyPluginBtn"),
+            pluginZipInput: document.getElementById("pluginZipInput"),
+            createBotBtn: document.getElementById("createBotBtn"),
+            saveSettingsBtn: document.getElementById("saveSettingsBtn"),
+            pages: document.querySelectorAll('.page'),
+            dashboardPage: document.getElementById('dashboard-page'),
+            botManagementPage: document.getElementById('bot-management-page'),
+            logsDiv: document.getElementById("logs"),
+            pluginsGrid: document.querySelector('.plugins-grid'),
+            sidebarBotNick: document.getElementById('sidebar-bot-nick'),
+            sidebarBotServer: document.getElementById('sidebar-bot-server'),
+            sidebarBotStatusDot: document.getElementById('sidebar-bot-status-dot'),
+            statsTotal: document.getElementById('stats-total'),
+            statsRunning: document.getElementById('stats-running'),
+            statsStopped: document.getElementById('stats-stopped'),
+            botTableBody: document.getElementById('bot-table-body'),
+            resourceBotNick: document.getElementById('resource-bot-nick'),
+            cpuUsageText: document.getElementById('cpu-usage-text'),
+            cpuProgress: document.getElementById('cpu-progress'),
+            ramUsageText: document.getElementById('ram-usage-text'),
+            ramProgress: document.getElementById('ram-progress'),
+            mainHeaderTitle: document.getElementById('main-header-title'),
+            mainHeaderSubtitle: document.getElementById('main-header-subtitle'),
+            headerActions: document.querySelector('.header-actions'),
+            navDashboard: document.getElementById('nav-dashboard'),
+            sidebarBotCard: document.getElementById('sidebar-bot-card'),
+            managementTabs: document.querySelectorAll('.bot-management-tabs .tab-btn'),
+            tabContents: document.querySelectorAll('.tab-content'),
+        };
 
         function connect() {
-            if (ws && ws.readyState === WebSocket.OPEN) return;
             ws = new WebSocket("ws://localhost:3001");
-
-            ws.onopen = () => {
-                logWithType("status", "WebSocket подключен.");
-                messageBuffer = "";
-            };
-
-            ws.onmessage = (event) => {
-                messageBuffer += event.data;
-                processMessageBuffer();
-            };
-
-            ws.onclose = () => {
-                logWithType("status", "WebSocket закрыт. Попытка переподключения через 3с...");
-                botData.botIsRunning = false;
-                updateUI();
-                setTimeout(connect, 3000);
-            };
-
-            ws.onerror = () => {
-                logWithType("error", "Ошибка WebSocket.");
-                botData.botIsRunning = false;
-                updateUI();
-            };
-        }
-
-        function processMessageBuffer() {
-            let lastCut = 0;
-            while (lastCut < messageBuffer.length) {
-                const firstBrace = messageBuffer.indexOf('{', lastCut);
-                if (firstBrace === -1) break;
-
-                let braceCount = 0;
-                let endBrace = -1;
-                for (let i = firstBrace; i < messageBuffer.length; i++) {
-                    if (messageBuffer[i] === '{') braceCount++;
-                    if (messageBuffer[i] === '}') braceCount--;
-                    if (braceCount === 0) {
-                        endBrace = i;
-                        break;
-                    }
-                }
-
-                if (endBrace !== -1) {
-                    const chunk = messageBuffer.substring(firstBrace, endBrace + 1);
-                    try {
-                        const data = JSON.parse(chunk);
-                        handleWsData(data);
-                        lastCut = endBrace + 1;
-                    } catch (e) {
-                        // Failed to parse, maybe incomplete, wait for more data.
-                        break;
-                    }
-                } else {
-                    // Incomplete object, wait for more data.
-                    break;
-                }
-            }
-            if (lastCut > 0) {
-                messageBuffer = messageBuffer.substring(lastCut);
-            }
+            ws.onopen = () => logWithType("status", "WebSocket подключен.");
+            ws.onmessage = (event) => { try { handleWsData(JSON.parse(event.data)); } catch(e) {} };
+            ws.onclose = () => { logWithType("status", "WebSocket закрыт. Переподключение..."); botData.botIsRunning = false; updateUI(); setTimeout(connect, 3000); };
+            ws.onerror = () => { logWithType("error", "Ошибка WebSocket."); botData.botIsRunning = false; updateUI(); };
         }
 
         function handleWsData(data) {
-            if (data.type === "botInfo") {
-                botData = { ...botData, ...data.data };
-                updateUI();
-            } else if (data.type === "availablePlugins") {
-                availablePlugins = data.data;
-                renderPlugins(availablePlugins);
-            } else if (data.type === "chat") {
-                logWithType("chat", data.message);
-            } else if (data.type === "status") {
-                logWithType(data.message.includes("Ошибка") ? "error" : "status", data.message);
-            } else if (data.type === "pluginUploadStatus") {
-                logWithType(data.success ? "info" : "error", data.message);
+            switch (data.type) {
+                case "botInfo": botData = { ...botData, ...data.data }; updateUI(); break;
+                case "availablePlugins": availablePlugins = data.data; renderPlugins(); break;
+                case "chat": logWithType("chat", data.message); break;
+                case "status": logWithType(data.message.includes("Ошибка") ? "error" : "status", data.message); break;
+                case "systemUsage": updateResourceMonitoring(data.cpu, data.ram); break;
+            }
+        }
+
+        function sendWsMessage(type, payload = {}) {
+            if (ws && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ type, ...payload }));
+        }
+
+        function switchToView(viewName) {
+            elements.pages.forEach(p => p.classList.remove('active'));
+            elements.headerActions.classList.add('hidden');
+            elements.navDashboard.classList.remove('active');
+
+            if (viewName === 'dashboard') {
+                elements.dashboardPage.classList.add('active');
+                elements.mainHeaderTitle.textContent = "Дашборд";
+                elements.mainHeaderSubtitle.textContent = "Общая сводка по вашей системе BotMine";
+                elements.navDashboard.classList.add('active');
+            } else if (viewName === 'botManagement') {
+                elements.botManagementPage.classList.add('active');
+                elements.mainHeaderTitle.textContent = botData.nick;
+                elements.mainHeaderSubtitle.textContent = botData.server;
+                elements.headerActions.classList.remove('hidden');
             }
         }
 
         function updateUI() {
             const botExists = botData.nick && botData.server;
-            createFirstBotBtn.style.display = botExists ? 'none' : 'inline-flex';
-            botList.style.display = botExists ? 'flex' : 'none';
+            const isRunning = botData.botIsRunning;
 
             if (botExists) {
-                document.getElementById('bot-card-nick').textContent = botData.nick;
-                document.getElementById('bot-card-server').textContent = botData.server;
-                const statusIndicator = document.getElementById('bot-status-indicator');
-                statusIndicator.classList.toggle('online', botData.botIsRunning);
-                statusIndicator.classList.toggle('offline', !botData.botIsRunning);
+                elements.initialSetupOverlay.classList.add('hidden');
+            } else {
+                elements.initialSetupOverlay.classList.remove('hidden');
+                switchToView('dashboard');
             }
 
-            // Обновление индикатора в консоли
-            botConsoleStatus.classList.toggle('online', botData.botIsRunning);
-            botConsoleStatus.classList.toggle('offline', !botData.botIsRunning);
-            botConsoleStatus.querySelector('.text').textContent = botData.botIsRunning ? 'Running' : 'Stopped';
+            elements.sidebarBotNick.textContent = botExists ? botData.nick : 'Бот не настроен';
+            elements.sidebarBotServer.textContent = botExists ? botData.server : 'Настройте для начала';
+            elements.resourceBotNick.textContent = botExists ? botData.nick : 'Нет бота';
+            elements.sidebarBotStatusDot.classList.toggle('online', isRunning);
+            elements.sidebarBotStatusDot.classList.toggle('offline', !isRunning);
 
-            startBotBtn.disabled = botData.botIsRunning;
-            stopBotBtn.disabled = !botData.botIsRunning;
-            restartBotBtn.disabled = !botData.botIsRunning;
-            messageInput.disabled = !botData.botIsRunning;
-            sendMessageBtn.disabled = !botData.botIsRunning;
-            updatePluginButtons();
+            elements.startBotBtn.disabled = isRunning || !botExists;
+            elements.stopBotBtn.disabled = !isRunning;
+            elements.restartBotBtn.disabled = !isRunning;
+            elements.exportBotBtn.disabled = !botExists;
+            elements.deleteBotBtn.disabled = !botExists;
+
+            elements.messageInput.disabled = !isRunning;
+            elements.sendMessageBtn.disabled = !isRunning;
+
+            elements.statsTotal.textContent = botExists ? '1' : '0';
+            elements.statsRunning.textContent = isRunning ? '1' : '0';
+            elements.statsStopped.textContent = botExists && !isRunning ? '1' : '0';
+            elements.botTableBody.innerHTML = botExists
+                ? `<tr><td>${botData.nick}</td><td><span class="status-tag ${isRunning ? 'running' : 'stopped'}">${isRunning ? 'Запущен' : 'Остановлен'}</span></td><td>...</td></tr>`
+                : `<tr><td colspan="3" style="text-align:center; color: var(--text-tertiary);">Настройте первого бота.</td></tr>`;
+
+            renderPlugins();
+        }
+
+        function updateResourceMonitoring(cpu = 0, ram = 0) {
+            const maxRam = 512;
+            const ramPercent = Math.min(100, (ram / maxRam) * 100);
+            elements.cpuUsageText.textContent = `${cpu.toFixed(1)}%`;
+            elements.cpuProgress.style.width = `${Math.min(100, cpu)}%`;
+            elements.ramUsageText.textContent = `${ram.toFixed(1)} MB`;
+            elements.ramProgress.style.width = `${ramPercent}%`;
         }
 
         function logWithType(type, msg) {
+            const isScrolledToBottom = elements.logsDiv.scrollHeight - elements.logsDiv.clientHeight <= elements.logsDiv.scrollTop + 5;
             const span = document.createElement('span');
             span.className = `log-${type}`;
-            span.innerHTML = msg.replace(/</g, "&lt;").replace(/>/g, "&gt;");
-            logsDiv.appendChild(span);
-            logsDiv.innerHTML += "<br>";
-            logsDiv.scrollTop = logsDiv.scrollHeight;
+            span.innerHTML = (type === 'chat') ? msg : msg.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+            elements.logsDiv.appendChild(span);
+            elements.logsDiv.innerHTML += "<br>";
+            if (isScrolledToBottom) elements.logsDiv.scrollTop = elements.logsDiv.scrollHeight;
         }
 
-        function renderPlugins(plugins) {
-            const container = document.querySelector('.plugins-grid');
-            if (!container) return;
-            container.innerHTML = '';
-            for (const pluginName in plugins) {
-                const plugin = plugins[pluginName];
-                container.insertAdjacentHTML('beforeend', `
-                    <div class="plugin-card" data-plugin-name="${plugin.name}">
-                        <i class="fa-solid fa-gear plugin-settings-btn"></i>
-                        <h4>${plugin.name}</h4>
-                        <p>${plugin.description}</p>
-                        <button class="plugin-toggle-btn"></button>
-                    </div>`);
-            }
-            updatePluginButtons();
-        }
+        function renderPlugins() {
+            elements.pluginsGrid.innerHTML = '';
+            if (!availablePlugins || Object.keys(availablePlugins).length === 0) return;
 
-        function updatePluginButtons() {
-            document.querySelectorAll('.plugin-card').forEach(card => {
-                const pluginName = card.dataset.pluginName;
-                const button = card.querySelector('.plugin-toggle-btn');
-                const isActive = botData.activatedPlugins.includes(pluginName);
-                button.innerHTML = isActive ? '<i class="fa-solid fa-trash"></i> Удалить' : '<i class="fa-solid fa-plus"></i> Загрузить';
-                button.className = `plugin-toggle-btn ${isActive ? 'remove' : 'load'}`;
-                card.classList.toggle('active', isActive);
+            Object.values(availablePlugins).forEach(plugin => {
+                const isActive = botData.activatedPlugins && botData.activatedPlugins.includes(plugin.name);
+                elements.pluginsGrid.insertAdjacentHTML('beforeend', `
+                <div class="plugin-card ${isActive ? 'active' : ''}" data-plugin-name="${plugin.name}">
+                    <i class="fa-solid fa-gear plugin-settings-btn"></i>
+                    <h4>${plugin.name}</h4><p>${plugin.description}</p>
+                    <div class="plugin-controls">
+                        <button class="plugin-toggle-btn ${isActive ? '' : 'load'}">${isActive ? 'Отключить' : 'Включить'}</button>
+                    </div>
+                </div>`);
             });
         }
-
-        function sendWsMessage(type, payload = {}) {
-            if (!ws || ws.readyState !== WebSocket.OPEN) {
-                logWithType("error", "WebSocket не подключен.");
-                connect();
-                return;
-            }
-            ws.send(JSON.stringify({ type, ...payload }));
-        }
-
-        startBotBtn.onclick = () => sendWsMessage('startBot');
-        stopBotBtn.onclick = () => sendWsMessage('stopBot');
-        restartBotBtn.onclick = () => {
-            logWithType("status", "Перезапускаю бота...");
-            sendWsMessage('stopBot');
-            setTimeout(() => {
-                sendWsMessage('startBot');
-            }, 1500); // Задержка в 1.5 секунды
-        };
-
-        sendMessageBtn.onclick = () => {
-            if (messageInput.value.trim()) {
-                sendWsMessage('sendMessage', { message: messageInput.value });
-                messageInput.value = "";
-            }
-        };
-        messageInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' && !messageInput.disabled) {
-                e.preventDefault();
-                sendMessageBtn.click();
-            }
-        });
-
-        document.getElementById("createBotBtn").onclick = () => {
-            sendWsMessage('createBot', {
-                host: document.getElementById("modal_server").value,
-                username: document.getElementById("modal_username").value,
-                password: document.getElementById("modal_password").value
-            });
-            botModal.style.display = "none";
-        };
-
-        openBotModalBtn.onclick = () => {
-            document.getElementById('modal_username').value = botData.nick || "";
-            document.getElementById('modal_server').value = botData.server || "";
-            document.getElementById('modal_password').value = "";
-            botModal.style.display = "block";
-        };
-
-        createFirstBotBtn.onclick = () => openBotModalBtn.click();
-
-        document.querySelector('.plugins-grid').addEventListener('click', (e) => {
-            const card = e.target.closest('.plugin-card');
-            if (!card) return;
-            const pluginName = card.dataset.pluginName;
-            if (e.target.classList.contains('plugin-toggle-btn')) {
-                sendWsMessage('togglePlugin', { pluginName });
-            }
-            if (e.target.classList.contains('plugin-settings-btn')) {
-                openSettingsModal(pluginName);
-            }
-        });
 
         function openSettingsModal(pluginName) {
             const settings = botData.pluginSettings?.[pluginName] || availablePlugins[pluginName]?.defaultSettings;
             document.getElementById('settingsModalTitle').textContent = `Настройки: ${pluginName}`;
             const modalBody = document.getElementById('settingsModalBody');
             modalBody.innerHTML = '';
-
             if (settings && Object.keys(settings).length > 0) {
                 for (const key in settings) {
-                    modalBody.innerHTML += `<div class="settings-field"><label for="setting_${key}">${settings[key].label}</label><input type="text" id="setting_${key}" name="${key}" value="${settings[key].value || ''}"></div>`;
+                    modalBody.innerHTML += `<div style="margin-bottom:15px;"><label style="display:block; margin-bottom:5px;">${settings[key].label}</label><input type="text" id="setting_${key}" name="${key}" value="${settings[key].value || ''}"></div>`;
                 }
-                document.getElementById('saveSettingsBtn').style.display = 'flex';
+                elements.saveSettingsBtn.style.display = 'block';
+                elements.saveSettingsBtn.onclick = () => savePluginSettings(pluginName);
             } else {
                 modalBody.innerHTML = '<p>Для этого плагина нет доступных настроек.</p>';
-                document.getElementById('saveSettingsBtn').style.display = 'none';
+                elements.saveSettingsBtn.style.display = 'none';
             }
-            document.getElementById('saveSettingsBtn').onclick = () => savePluginSettings(pluginName);
-            settingsModal.style.display = "block";
+            elements.settingsModal.classList.add('active');
         }
 
         function savePluginSettings(pluginName) {
             const newSettings = {};
-            document.querySelectorAll('#settingsModalBody input').forEach(input => {
-                newSettings[input.name] = input.value;
-            });
+            document.querySelectorAll('#settingsModalBody input').forEach(input => { newSettings[input.name] = input.value; });
             sendWsMessage('savePluginSettings', { pluginName, settings: newSettings });
-            settingsModal.style.display = "none";
+            elements.settingsModal.classList.remove('active');
         }
 
-        exportBotDataBtn.onclick = async () => {
-            logWithType("status", "Экспорт файла main.json...");
-            try {
-                const response = await fetch('/export-bot-data');
-                if (!response.ok) throw new Error(await response.text());
-                const blob = await response.blob();
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = 'main.json';
-                document.body.appendChild(a);
-                a.click();
-                a.remove();
-                window.URL.revokeObjectURL(url);
-                logWithType("info", "Файл main.json успешно экспортирован.");
-            } catch (error) {
-                logWithType("error", `Ошибка экспорта: ${error.message}`);
+        elements.startBotBtn.onclick = () => sendWsMessage('startBot');
+        elements.stopBotBtn.onclick = () => sendWsMessage('stopBot');
+        elements.restartBotBtn.onclick = () => sendWsMessage('startBot');
+
+        elements.exportBotBtn.onclick = () => {
+            window.location.href = '/export-bot-data';
+        };
+
+        elements.deleteBotBtn.onclick = () => {
+            if (confirm("Вы уверены, что хотите удалить этого бота? Это действие необратимо и удалит файл конфигурации.")) {
+                sendWsMessage('deleteBot');
             }
         };
 
-        importBotDataBtn.onclick = () => importFileInput.click();
-        importFileInput.addEventListener('change', (event) => {
-            const file = event.target.files[0];
-            if (!file || !file.name.endsWith('.json')) {
-                logWithType("error", "Выберите файл в формате JSON.");
-                return;
-            }
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                sendWsMessage('importBotData', { content: e.target.result });
-                logWithType("status", "Файл отправлен на сервер для импорта.");
-            };
-            reader.readAsText(file);
-            event.target.value = '';
-        });
-
-        addMyPluginBtn.onclick = () => pluginZipInput.click();
-        howToCreatePluginBtn.onclick = () => pluginDocModal.style.display = "block";
-        pluginZipInput.addEventListener('change', (event) => {
-            const file = event.target.files[0];
-            if (!file || !file.name.endsWith('.zip')) {
-                logWithType("error", "Выберите файл в формате ZIP.");
-                return;
-            }
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const binaryString = new Uint8Array(e.target.result).reduce((data, byte) => data + String.fromCharCode(byte), '');
-                const base64Content = btoa(binaryString);
-                sendWsMessage('uploadPluginZip', { fileName: file.name, content: base64Content });
-                logWithType("status", `Отправка плагина "${file.name}"...`);
-            };
-            reader.readAsArrayBuffer(file);
-            event.target.value = '';
-        });
-
-        whatsNewBtn.onclick = () => {
-            whatsNewModal.style.display = "block";
-            fetchCommits();
-        };
-        async function fetchCommits() {
-            const container = document.getElementById("whatsNewCommits");
-            container.innerHTML = '<p class="loading-text">Загрузка...</p>';
-            try {
-                const response = await fetch('/api/commits');
-                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-                const commits = await response.json();
-                container.innerHTML = commits.map(commit => `
-                    <div class="commit-item">
-                        <p><strong>${commit.message}</strong></p>
-                        <p><small>Автор: ${commit.author} | Дата: ${new Date(commit.date).toLocaleDateString('ru-RU')}</small></p>
-                    </div>
-                `).join('');
-            } catch (error) {
-                container.innerHTML = `<p class="log-error">Ошибка загрузки: ${error.message}</p>`;
-            }
-        }
-
-        document.querySelectorAll('.modal .close').forEach(closeBtn => {
-            closeBtn.onclick = () => {
-                closeBtn.closest('.modal').style.display = 'none';
-            }
-        });
-        window.onclick = (event) => {
-            if (event.target.classList.contains('modal')) {
-                event.target.style.display = 'none';
+        elements.sendMessageBtn.onclick = () => {
+            if (elements.messageInput.value.trim()) {
+                sendWsMessage('sendMessage', { message: elements.messageInput.value });
+                elements.messageInput.value = "";
             }
         };
+        elements.messageInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.target.disabled) { e.preventDefault(); elements.sendMessageBtn.click(); }
+        });
+        elements.createBotBtn.onclick = () => {
+            sendWsMessage('createBot', {
+                host: document.getElementById("modal_server").value,
+                username: document.getElementById("modal_username").value,
+                password: document.getElementById("modal_password").value
+            });
+            elements.botModal.classList.remove('active');
+        };
+        elements.openModalBtn.onclick = () => {
+            document.getElementById('modal_username').value = botData.nick || "";
+            document.getElementById('modal_server').value = botData.server || "";
+            document.getElementById('modal_password').value = botData.password || "";
+            elements.botModal.classList.add('active');
+        };
+        elements.initialCreateBtn.onclick = () => {
+            document.getElementById('modal_username').value = "";
+            document.getElementById('modal_server').value = "";
+            document.getElementById('modal_password').value = "";
+            elements.botModal.classList.add('active');
+        };
+        elements.importBotDataBtn.onclick = () => elements.importFileInput.click();
+        elements.importFileInput.addEventListener('change', e => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = e => sendWsMessage('importBotData', { content: e.target.result });
+                reader.readAsText(file);
+                e.target.value = '';
+            }
+        });
+        elements.addMyPluginBtn.onclick = () => elements.pluginZipInput.click();
+        elements.pluginZipInput.addEventListener('change', e => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = re => sendWsMessage('uploadPluginZip', { fileName: file.name, content: btoa([...new Uint8Array(re.target.result)].map(c => String.fromCharCode(c)).join('')) });
+                reader.readAsArrayBuffer(file);
+                e.target.value = '';
+            }
+        });
+        elements.pluginsGrid.addEventListener('click', e => {
+            const card = e.target.closest('.plugin-card');
+            if (!card) return;
+            const pluginName = card.dataset.pluginName;
+            if (e.target.closest('.plugin-toggle-btn')) sendWsMessage('togglePlugin', { pluginName });
+            if (e.target.closest('.plugin-settings-btn')) openSettingsModal(pluginName);
+        });
+
+        elements.navDashboard.onclick = () => switchToView('dashboard');
+        elements.sidebarBotCard.onclick = () => { if (botData.nick) switchToView('botManagement'); };
+        elements.managementTabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                elements.managementTabs.forEach(t => t.classList.remove('active'));
+                elements.tabContents.forEach(c => c.classList.remove('active'));
+                tab.classList.add('active');
+                document.getElementById(tab.dataset.tab).classList.add('active');
+            });
+        });
+
+        document.querySelectorAll('.modal .close').forEach(btn => {
+            btn.onclick = () => btn.closest('.modal').classList.remove('active');
+        });
 
         connect();
         updateUI();
-
+        updateResourceMonitoring();
     });
 </script>
 </body>

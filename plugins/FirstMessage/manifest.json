@@ -1,0 +1,10 @@
+{
+  "name": "FirstMessage",
+  "description": "Отправляет сообщение, когда бот зашел в игру.",
+  "defaultSettings": {
+    "message": {
+      "label": "Текст",
+      "value": "&fБип, Буп! Я &a&lуспешно&f запустился!"
+    }
+  }
+}

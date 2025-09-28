@@ -6,10 +6,9 @@ const mineflayer = require("mineflayer");
 const os = require('os');
 const path = require("path");
 const fs = require("fs");
-const axios = require('axios'); // Добавляем axios
-const AdmZip = require('adm-zip'); // Добавляем AdmZip для работы с архивами
+const axios = require('axios');
+const AdmZip = require('adm-zip');
 
-// Подключаем наши новые модули
 const pluginLoader = require('./plugins/PluginLoader');
 const botAPI = require('./MineflayerBot/System/BotAPI');
 const commitWatcher = require('./commitWatcher');
@@ -25,7 +24,6 @@ JSON.parse = function(text, reviver) {
     }
 }
 
-// Структура данных для хранения информации о боте
 let myBot = {
     nick: "",
     password: "",
@@ -43,12 +41,14 @@ let myBot = {
 
 const app = express();
 const wss = new WebSocketServer({ port: 3001 });
-let bot = null; // Глобальная переменная для экземпляра бота
+let bot = null;
 
 const dataFolder = path.join(os.homedir(), '.bot-mine');
 const filePath = path.join(dataFolder, 'main.json');
+const pluginsRootPath = path.join(__dirname, 'plugins');
 const dir = path.dirname(filePath);
 if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+if (!fs.existsSync(pluginsRootPath)) fs.mkdirSync(pluginsRootPath, { recursive: true });
 
 function loadBotData() {
     if (fs.existsSync(filePath)) {
@@ -115,7 +115,6 @@ function saveBotData() {
 
 loadBotData();
 
-// --- HTTP-сервер ---
 app.use(express.static(path.join(__dirname, "dist")));
 
 app.get('/export-bot-data', (req, res) => {
@@ -147,7 +146,6 @@ app.get('/export-bot-data', (req, res) => {
     }
 });
 
-// Новый эндпоинт для получения последних коммитов
 app.get('/api/commits', async (req, res) => {
     const owner = 'Semleks';
     const repo = 'BotMine';
@@ -188,7 +186,6 @@ app.get('/api/commits', async (req, res) => {
 
 app.get(/.*/, (req, res) => res.sendFile(path.join(__dirname, "dist", "index.html")));
 
-// --- WebSocket-сервер ---
 wss.on("connection", (ws) => {
     console.log("[LOG] Клиент подключен к WebSocket");
 
@@ -251,6 +248,7 @@ wss.on("connection", (ws) => {
                 if (bot) {
                     log("status", "Выключаю бота...", ws);
                     commitWatcher.stop();
+                    bot.removeAllListeners();
                     bot.end();
                     bot = null;
                     saveBotData();
@@ -260,10 +258,32 @@ wss.on("connection", (ws) => {
                 break;
             }
 
+            case "deleteBot": {
+                if (bot) {
+                    bot.end();
+                    bot = null;
+                }
+                try {
+                    if (fs.existsSync(filePath)) {
+                        fs.unlinkSync(filePath);
+                        log("status", "Файл main.json был удален.", ws);
+                        console.log("[LOG] Файл main.json был удален.");
+                    } else {
+                        log("status", "Файл main.json не найден, нечего удалять.", ws);
+                    }
+                    loadBotData();
+                } catch (error) {
+                    log("status", `Ошибка при удалении main.json: ${error.message}`, ws);
+                    console.error("[LOG] Ошибка при удалении main.json:", error);
+                }
+                break;
+            }
+
             case "startBot": {
                 if (bot) {
                     log("status", "Перезапускаем бота...", ws);
                     commitWatcher.stop();
+                    bot.removeAllListeners(); // FIX: Remove listeners from the old bot instance
                     bot.end();
                     bot = null;
                 }
@@ -279,16 +299,33 @@ wss.on("connection", (ws) => {
                     auth: 'offline',
                     version: '1.16.5'
                 });
+                
+                saveBotData();
 
                 pluginLoader.loadActivePlugins(bot, myBot, botAPI);
                 commitWatcher.start(bot, myBot.commitWatcherSettings, botAPI);
-                saveBotData();
+
+                bot.on('spawn', (spawnEvent) => {
+                    Object.values(pluginLoader.loadedPlugins).forEach(pluginInstance => {
+                        if (pluginInstance.onSpawn) {
+                            try {
+                                pluginInstance.onSpawn(spawnEvent);
+                            } catch (e) {
+                                console.error(`[SERVER] Ошибка в onSpawn плагина ${pluginInstance.constructor.name}:`, e);
+                            }
+                        }
+                    });
+                });
 
                 bot.on('message', (jsonMsg) => {
                     const text = jsonMsg.toString();
-                    if (ws.readyState === ws.OPEN) {
-                        ws.send(JSON.stringify({ type: "chat", message: text }));
-                    }
+                    wss.clients.forEach(client => {
+                        if (client.readyState === client.OPEN) {
+                            if (text.trim() === "")
+                                return;
+                            client.send(JSON.stringify({ type: "chat", message: jsonMsg.toHTML() }));
+                        }
+                    });
 
                     if (text.includes("dev")) {
                         bot.chat('/cc Этот бот создан с помощью BotMine!');
@@ -306,8 +343,6 @@ wss.on("connection", (ws) => {
                 });
 
                 bot.on('playerJoined', (player) => {
-                    //console.log(`[LOG] onPlayerJoined вызван для игрока: ${player.username}`);
-
                     Object.values(pluginLoader.loadedPlugins).forEach(pluginInstance => {
                         if (pluginInstance.onPlayerJoined) {
                             try {
@@ -364,9 +399,9 @@ wss.on("connection", (ws) => {
                 myBot.nick = data.username;
                 myBot.password = data.password;
                 myBot.server = data.host;
-                log("status", "Данные бота сохранены. Запускаем...", ws);
+                log("status", "Данные бота сохранены.", ws);
                 saveBotData();
-                log("status", "Бот создан/изменен. Для запуска нажмите 'Запустить бота'.", ws);
+                log("status", "Бот создан/изменен. Для запуска нажмите 'Запустить'.", ws);
                 break;
             }
 
@@ -427,7 +462,6 @@ wss.on("connection", (ws) => {
                         return;
                     }
 
-                    // --- Валидация manifest.json ---
                     let parsedManifest;
                     try {
                         const manifestContent = manifestEntry.getData().toString('utf8');
@@ -450,27 +484,20 @@ wss.on("connection", (ws) => {
                         return;
                     }
 
-                    // --- Валидация index.js на наличие onMessage ---
                     const indexJsContent = indexJsEntry.getData().toString('utf8');
-                    // Простая проверка на наличие onMessage( или onMessage (
                     const onMessageRegex = /onMessage\s*\((\s*message\s*,\s*json\s*)?\)|\bonMessage\s*:\s*function\s*\(/;
                     if (!onMessageRegex.test(indexJsContent)) {
                         log("pluginUploadStatus", "Ошибка: В index.js не найден метод 'onMessage(message, json)' или 'onMessage: function()'.", ws, false);
                         return;
                     }
 
-                    // Если все проверки пройдены, продолжаем распаковку
-                    let pluginDirName = parsedManifest.name.replace(/[^a-zA-Z0-9_-]/g, '_'); // Использование имени из манифеста, очистка от спецсимволов
+                    let pluginDirName = parsedManifest.name.replace(/[^a-zA-Z0-9_-]/g, '_');
                     if (pluginDirName.length === 0) {
-                        pluginDirName = `plugin_${Date.now()}`; // Fallback if name becomes empty after sanitization
+                        pluginDirName = `plugin_${Date.now()}`;
                     }
-
-                    const pluginsRootPath = path.join(__dirname, 'plugins');
                     const targetPluginPath = path.join(pluginsRootPath, pluginDirName);
 
-                    if (!fs.existsSync(pluginsRootPath)) {
-                        fs.mkdirSync(pluginsRootPath, { recursive: true });
-                    }
+                    if (!fs.existsSync(pluginsRootPath)) fs.mkdirSync(pluginsRootPath, { recursive: true });
 
                     if (fs.existsSync(targetPluginPath)) {
                         console.warn(`[WARN] Директория плагина "${pluginDirName}" уже существует. Будет перезаписана.`);
@@ -478,18 +505,94 @@ wss.on("connection", (ws) => {
                     }
 
                     zip.extractAllTo(targetPluginPath, true);
-
-                    log("pluginUploadStatus", `Плагин "${parsedManifest.name}" успешно установлен. Пожалуйста, перезапустите приложение, чтобы он появился в списке.`, ws, true);
+                    log("pluginUploadStatus", `Плагин "${parsedManifest.name}" успешно установлен.`, ws, true);
                     console.log(`[LOG] Плагин "${pluginDirName}" успешно установлен в "${targetPluginPath}".`);
 
-                    // Также обновляем список доступных плагинов для клиента, чтобы он мог перерендерить UI
-                    // Это не перезагрузит плагин, но сделает его видимым для включения/выключения
-                    pluginLoader.loadPluginsFromDisk(); // Пересканируем папку plugins
-                    ws.send(JSON.stringify({ type: "availablePlugins", data: pluginLoader.availablePlugins }));
-
+                    pluginLoader.loadPluginsFromDisk();
+                    wss.clients.forEach(c => { if(c.readyState === c.OPEN) c.send(JSON.stringify({ type: "availablePlugins", data: pluginLoader.availablePlugins }))});
                 } catch (error) {
                     log("pluginUploadStatus", `Ошибка при установке плагина: ${error.message}`, ws, false);
                     console.error("[LOG] Ошибка при установке плагина:", error);
+                }
+                break;
+            }
+
+            case "createPluginScaffold": {
+                const { pluginName, pluginDescription } = data;
+                const pluginDirName = pluginName.replace(/[^a-zA-Z0-9_-]/g, '_');
+                const targetPluginPath = path.join(pluginsRootPath, pluginDirName);
+
+                if (fs.existsSync(targetPluginPath)) {
+                    log("status", `Ошибка: Плагин с именем "${pluginName}" уже существует.`, ws);
+                    return;
+                }
+                try {
+                    fs.mkdirSync(targetPluginPath, { recursive: true });
+                    const manifestContent = JSON.stringify({ name: pluginName, description: pluginDescription, visual: true }, null, 4);
+                    fs.writeFileSync(path.join(targetPluginPath, 'manifest.json'), manifestContent);
+                    const indexJsContent = `// @visual-editor-plugin\nclass ${pluginName} {\n    constructor(bot, botInfo, botAPI) {\n        this.bot = bot;\n        this.botInfo = botInfo;\n        this.botAPI = botAPI;\n    }\n}\nmodule.exports = ${pluginName};`;
+                    fs.writeFileSync(path.join(targetPluginPath, 'index.js'), indexJsContent);
+                    log("pluginScaffoldCreated", `Плагин "${pluginName}" создан.`, ws, true, { pluginName });
+                    pluginLoader.loadPluginsFromDisk();
+                    wss.clients.forEach(c => { if (c.readyState === c.OPEN) c.send(JSON.stringify({ type: "availablePlugins", data: pluginLoader.availablePlugins })) });
+                } catch (error) {
+                    log("status", `Ошибка создания плагина: ${error.message}`, ws);
+                }
+                break;
+            }
+
+            case "getPluginCode": {
+                const { pluginName } = data;
+                const pluginDirName = pluginName.replace(/[^a-zA-Z0-9_-]/g, '_');
+                const pluginPath = path.join(pluginsRootPath, pluginDirName, 'index.js');
+                if (fs.existsSync(pluginPath)) {
+                    const code = fs.readFileSync(pluginPath, 'utf-8');
+                    ws.send(JSON.stringify({ type: 'pluginCodeResponse', pluginName, code, success: true }));
+                } else {
+                    ws.send(JSON.stringify({ type: 'pluginCodeResponse', message: 'Файл index.js не найден.', success: false }));
+                }
+                break;
+            }
+
+            case "saveVisualPlugin": {
+                const { pluginName, code } = data;
+                const pluginDirName = pluginName.replace(/[^a-zA-Z0-9_-]/g, '_');
+                const pluginIndexPath = path.join(pluginsRootPath, pluginDirName, 'index.js');
+                try {
+                    fs.writeFileSync(pluginIndexPath, code);
+                    log("pluginSaveStatus", `Плагин "${pluginName}" сохранен.`, ws, true);
+                } catch (error) {
+                    log("pluginSaveStatus", `Ошибка сохранения: ${error.message}`, ws, false);
+                }
+                break;
+            }
+
+            case "deletePlugin": {
+                const { pluginName } = data;
+                const pluginDirName = pluginName.replace(/[^a-zA-Z0-9_-]/g, '_');
+                const targetPluginPath = path.join(pluginsRootPath, pluginDirName);
+
+                if (!fs.existsSync(targetPluginPath)) {
+                    log("status", `Ошибка: Плагин "${pluginName}" не найден для удаления.`, ws);
+                    return;
+                }
+
+                try {
+                    fs.rmSync(targetPluginPath, { recursive: true, force: true });
+
+                    const pluginIndex = myBot.activatedPlugins.indexOf(pluginName);
+                    if (pluginIndex > -1) {
+                        myBot.activatedPlugins.splice(pluginIndex, 1);
+                    }
+                    delete myBot.pluginSettings[pluginName];
+                    saveBotData();
+
+                    log("status", `Плагин "${pluginName}" успешно удален.`, ws);
+
+                    pluginLoader.loadPluginsFromDisk();
+                    wss.clients.forEach(c => { if (c.readyState === c.OPEN) c.send(JSON.stringify({ type: "availablePlugins", data: pluginLoader.availablePlugins })) });
+                } catch (error) {
+                    log("status", `Ошибка при удалении плагина: ${error.message}`, ws);
                 }
                 break;
             }
@@ -504,12 +607,36 @@ app.listen(3000, () => {
     console.log("WebSocket сервер слушает порт 3001");
 });
 
-function log(type, message, ws, isSuccess = true) {
-    if (ws && ws.readyState === ws.OPEN) {
-        if (type === "pluginUploadStatus") {
-            ws.send(JSON.stringify({ type, success: isSuccess, message }));
-        } else {
-            ws.send(JSON.stringify({ type, message }));
+let lastCpuUsage = process.cpuUsage();
+let lastCpuTime = Date.now();
+
+setInterval(() => {
+    const ram = process.memoryUsage().rss / (1024 * 1024);
+    const currentCpuUsage = process.cpuUsage();
+    const currentTime = Date.now();
+    const elapsedTime = (currentTime - lastCpuTime) * 1000;
+    const elapsedUsage = (currentCpuUsage.user - lastCpuUsage.user) + (currentCpuUsage.system - lastCpuUsage.system);
+    const cpuPercent = (100 * elapsedUsage / elapsedTime) / os.cpus().length;
+
+    lastCpuUsage = currentCpuUsage;
+    lastCpuTime = currentTime;
+
+    const usageData = JSON.stringify({
+        type: "systemUsage",
+        cpu: cpuPercent,
+        ram: ram
+    });
+
+    wss.clients.forEach(client => {
+        if (client.readyState === client.OPEN) {
+            client.send(usageData);
         }
+    });
+}, 2000);
+
+
+function log(type, message, ws, isSuccess = true, additionalData = {}) {
+    if (ws && ws.readyState === ws.OPEN) {
+        ws.send(JSON.stringify({ type, success: isSuccess, message, ...additionalData }));
     }
 }
