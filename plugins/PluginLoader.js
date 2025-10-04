@@ -53,16 +53,13 @@ class PluginLoader {
      * @param {object} botAPI Объект с API для взаимодействия с ботом.
      */
     loadActivePlugins(bot, botInfo, botAPI) {
-        // Сначала останавливаем и выгружаем плагины, которые больше не активны или требуют перезагрузки
         for (const pluginName in this.loadedPlugins) {
-            // Если плагин больше не в списке активированных, или экземпляр бота изменился
             if (!botInfo.activatedPlugins.includes(pluginName) || this.loadedPlugins[pluginName].bot !== bot) {
                 console.log(`[PluginLoader] Отключение и выгрузка плагина: ${pluginName}`);
-                this.unloadPlugin(pluginName); // Вызываем unloadPlugin, который также вызовет stop()
+                this.unloadPlugin(pluginName);
             }
         }
-
-        // Затем загружаем новые активные плагины или перезапускаем уже загруженные, если бот переподключился
+        
         for (const pluginName of botInfo.activatedPlugins) {
             // Если плагин не загружен ИЛИ загруженный плагин имеет другой экземпляр бота (переподключение)
             if (!this.loadedPlugins[pluginName] || this.loadedPlugins[pluginName].bot !== bot) {
