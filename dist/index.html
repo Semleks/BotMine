@@ -40,7 +40,33 @@
         }
         .app-wrapper { display: flex; height: 100vh; }
         .page { display: none; }
-        .page.active { display: block; }
+        .page.active {
+            display: block;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
         h1, h2, h3, h4, p { margin: 0; }
 
         .sidebar {
@@ -74,16 +100,29 @@
             font-size: 12px; font-weight: 700; color: var(--text-tertiary);
             text-transform: uppercase; padding: 20px 10px 10px;
         }
+        .sidebar-bot-list { max-height: 300px; overflow-y: auto; margin-bottom: 10px; }
         .sidebar-bot-list .bot-item {
             display: flex; align-items: center; gap: 10px;
             padding: 10px; border-radius: 6px; cursor: pointer;
             transition: background-color 0.2s;
+            margin-bottom: 5px;
         }
         .bot-item:hover { background-color: var(--bg-widget); }
-        .bot-item .status-dot { width: 8px; height: 8px; border-radius: 50%; }
+        .bot-item.active { background-color: var(--bg-widget); border-left: 3px solid var(--accent-purple); }
+        .bot-item .status-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; transition: all 0.3s ease; }
         .bot-item .status-dot.offline { background-color: var(--text-tertiary); }
-        .bot-info h4 { font-size: 14px; font-weight: 600; }
-        .bot-info p { font-size: 12px; color: var(--text-secondary); }
+        .bot-info { min-width: 0; flex: 1; }
+        .bot-info h4 { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .bot-info p { font-size: 12px; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .bot-info .bot-note {
+            font-size: 11px;
+            color: var(--text-tertiary);
+            margin-top: 3px;
+            font-style: italic;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
         .sidebar-footer { margin-top: auto; padding: 0 5px; }
 
         @keyframes pulse {
@@ -110,6 +149,10 @@
             display: flex; justify-content: space-between; align-items: center;
             padding: 20px 30px; flex-shrink: 0;
             border-bottom: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+        .header-title {
+            animation: slideIn 0.4s ease-out;
         }
         .header-title .main-icon {
             font-size: 24px; padding: 10px; border-radius: 8px;
@@ -122,33 +165,39 @@
         .header-actions.hidden { display: none; }
         .content-wrapper { padding: 30px; overflow-y: auto; height: 100%; }
 
-        .right-sidebar {
-            width: 320px; background-color: var(--bg-sidebar);
-            padding: 20px; border-left: 1px solid var(--border-color);
-        }
         .widget { background-color: var(--bg-widget); padding: 20px; border-radius: 12px; border: 1px solid var(--border-color); }
         .widget-header { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; }
         .widget-header i { color: var(--accent-green); }
         .widget-header h3 { font-size: 16px; font-weight: 700; }
-        .resource-item { background: var(--bg-content); padding: 15px; border-radius: 8px; }
-        .resource-item .bot-name { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-        .resource-item .bot-name h4 { font-size: 15px; font-weight: 600; }
-        .resource-usage { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-        .resource-usage i { color: var(--text-tertiary); font-size: 16px; }
-        .resource-usage .info .label { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 5px; }
-        .progress-bar { height: 6px; background-color: var(--bg-main); border-radius: 3px; overflow: hidden; }
-        .progress-bar div { height: 100%; background-color: var(--accent-green); border-radius: 3px; width: 0%; transition: width 0.5s ease; }
 
         #dashboard-page .dashboard-grid { display: grid; grid-template-columns: 300px 1fr; gap: 30px; }
         .stats-card { display: flex; flex-direction: column; gap: 15px; }
-        .stats-item { background: var(--bg-widget); padding: 20px; border-radius: 12px; border: 1px solid var(--border-color); }
+        .stats-item {
+            background: var(--bg-widget);
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .stats-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(145, 71, 255, 0.1);
+        }
         .stats-item p { color: var(--text-secondary); font-weight: 500; margin-bottom: 5px; }
         .stats-item .value { font-size: 28px; font-weight: 800; }
         .stats-item .value.total { color: var(--accent-blue); }
         .stats-item .value.running { color: var(--accent-green); }
         .stats-item .value.stopped { color: var(--text-tertiary); }
         .quick-manage-table table { width: 100%; border-collapse: collapse; }
-        .quick-manage-table th, .quick-manage-table td { padding: 15px; text-align: left; border-bottom: 1px solid var(--border-color); }
+        .quick-manage-table th, .quick-manage-table td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+            transition: background-color 0.2s ease;
+        }
+        .quick-manage-table tbody tr:hover {
+            background-color: rgba(145, 71, 255, 0.05);
+        }
         .quick-manage-table th { font-size: 12px; color: var(--text-secondary); text-transform: uppercase; }
         .quick-manage-table td .status-tag { padding: 4px 10px; border-radius: 15px; font-weight: 600; font-size: 12px; }
         .quick-manage-table td .status-tag.running { background-color: rgba(0, 245, 147, 0.1); color: var(--accent-green); }
@@ -198,8 +247,17 @@
             background-color: var(--bg-widget); border-radius: 8px;
             padding: 20px; border: 1px solid var(--border-color);
             display: flex; flex-direction: column; gap: 10px; position: relative;
+            transition: all 0.3s ease;
+            animation: slideIn 0.3s ease-out;
         }
-        .plugin-card.active { border-left: 3px solid var(--accent-green); }
+        .plugin-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+        }
+        .plugin-card.active {
+            border-left: 3px solid var(--accent-green);
+            background: linear-gradient(135deg, var(--bg-widget) 0%, rgba(0, 245, 147, 0.05) 100%);
+        }
         .plugin-card h4 { font-size: 16px; font-weight: 700; }
         .plugin-card p { font-size: 13px; flex-grow: 1; color: var(--text-secondary); }
         .plugin-controls { display: flex; gap: 10px; margin-top: 10px; }
@@ -216,9 +274,32 @@
             display: inline-flex; align-items: center; justify-content: center;
             border: 1px solid var(--border-color); background-color: var(--bg-widget);
             color: var(--text-primary); border-radius: 6px; padding: 10px 18px;
-            cursor: pointer; font-size: 14px; font-weight: 600; transition: all .2s ease;
+            cursor: pointer; font-size: 14px; font-weight: 600;
+            transition: all .2s ease;
+            position: relative;
+            overflow: hidden;
         }
-        button:hover:not(:disabled) { background-color: var(--bg-widget-hover); }
+        button::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            transform: translate(-50%, -50%);
+            transition: width 0.4s ease, height 0.4s ease;
+        }
+        button:active::before {
+            width: 300px;
+            height: 300px;
+        }
+        button:hover:not(:disabled) {
+            background-color: var(--bg-widget-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
         button:disabled { cursor: not-allowed; opacity: .5; }
         button i { margin-right: 8px; }
         .btn-primary { background-color: var(--accent-green); border-color: var(--accent-green); color: #000; }
@@ -226,7 +307,7 @@
 
         .modal {
             position: fixed;
-            z-index: 2001; /* FIX: Increased z-index to appear above the overlay */
+            z-index: 2001;
             left: 0; top: 0;
             width: 100%; height: 100%; background-color: rgba(0,0,0,0.7);
             backdrop-filter: blur(5px); display: flex; justify-content: center; align-items: center;
@@ -243,34 +324,23 @@
         .modal-content h2 { font-size: 20px; margin-bottom: 20px; }
         .modal-content .close { position: absolute; top: 15px; right: 20px; color: var(--text-secondary); font-size: 24px; cursor: pointer; }
 
-        .hidden {
-            display: none !important;
-        }
-        #initial-setup-overlay {
+        .hidden { display: none !important; }
+
+        .create-bot-footer {
             position: fixed;
-            top: 0; left: 0;
-            width: 100vw; height: 100vh;
-            background-color: var(--bg-main);
-            z-index: 2000;
+            bottom: 0;
+            left: 240px;
+            right: 0;
+            background-color: var(--bg-sidebar);
+            border-top: 1px solid var(--border-color);
+            padding: 15px 30px;
             display: flex;
             justify-content: center;
-            align-items: center;
-            flex-direction: column;
-            gap: 20px;
-        }
-        #initial-create-btn {
-            font-size: 22px;
-            padding: 20px 40px;
-            border-radius: 12px;
+            z-index: 100;
         }
     </style>
 </head>
 <body>
-
-<div id="initial-setup-overlay" class="hidden">
-    <div class="sidebar-header"><i class="fa-solid fa-cubes-stacked"></i><h1>BotMine</h1></div>
-    <button id="initial-create-btn" class="btn-primary"><i class="fa-solid fa-plus"></i>Создать бота</button>
-</div>
 
 <div class="app-wrapper">
     <aside class="sidebar">
@@ -278,20 +348,11 @@
         <ul class="sidebar-nav">
             <li><a class="nav-link active" id="nav-dashboard"><i class="fa-solid fa-table-cells-large"></i><span>Дашборд</span></a></li>
         </ul>
-        <div class="section-title">Боты</div>
-        <div class="sidebar-bot-list">
-            <div class="bot-item" id="sidebar-bot-card">
-                <div class="status-dot offline" id="sidebar-bot-status-dot"></div>
-                <div class="bot-info">
-                    <h4 id="sidebar-bot-nick">...</h4>
-                    <p id="sidebar-bot-server">...</p>
-                </div>
-            </div>
+        <div class="section-title">Боты (<span id="bot-count">0</span>/5)</div>
+        <div class="sidebar-bot-list" id="sidebar-bot-list">
         </div>
         <div class="sidebar-footer">
-            <button id="openModalBtn" style="width: 100%; margin-bottom: 10px;"><i class="fa-solid fa-gear"></i> Настроить бота</button>
             <button id="addMyPluginBtn" style="width: 100%; margin-bottom: 10px;"><i class="fa-solid fa-plus-circle"></i> Добавить плагин</button>
-            <button id="importBotDataBtn" style="width: 100%;"><i class="fa-solid fa-upload"></i> Импорт</button>
         </div>
     </aside>
 
@@ -305,7 +366,9 @@
                 <button id="startBot" class="btn-primary"><i class="fa-solid fa-play"></i> Запустить</button>
                 <button id="stopBot" class="btn-danger"><i class="fa-solid fa-stop"></i> Остановить</button>
                 <button id="restartBot"><i class="fa-solid fa-arrows-rotate"></i> Перезапустить</button>
+                <button id="openModalBtn"><i class="fa-solid fa-gear"></i> Настроить</button>
                 <button id="exportBot"><i class="fa-solid fa-file-export"></i> Экспорт</button>
+                <button id="importBotDataBtn"><i class="fa-solid fa-upload"></i> Импорт</button>
                 <button id="deleteBot" class="btn-danger"><i class="fa-solid fa-trash-can"></i> Удалить</button>
             </div>
         </header>
@@ -323,7 +386,7 @@
                         <div class="widget-header"><i class="fa-solid fa-bolt"></i><h3>Быстрое управление</h3></div>
                         <div class="widget">
                             <table>
-                                <thead><tr><th>Бот</th><th>Статус</th><th>Действия</th></tr></thead>
+                                <thead><tr><th>Бот</th><th>Сервер</th><th>Статус</th><th>Действия</th></tr></thead>
                                 <tbody id="bot-table-body"></tbody>
                             </table>
                         </div>
@@ -348,41 +411,48 @@
                 </div>
             </div>
         </div>
-    </main>
 
-    <aside class="right-sidebar">
-        <div class="widget">
-            <div class="widget-header"><i class="fa-solid fa-chart-line"></i><h3>Мониторинг ресурсов</h3></div>
-            <div class="resource-item">
-                <div class="bot-name"><h4 id="resource-bot-nick">...</h4></div>
-                <div class="resource-usage">
-                    <i class="fa-solid fa-microchip"></i>
-                    <div class="info"><div class="label"><span>CPU</span><span id="cpu-usage-text">0.0%</span></div><div class="progress-bar"><div id="cpu-progress"></div></div></div>
-                </div>
-                <div class="resource-usage">
-                    <i class="fa-solid fa-memory"></i>
-                    <div class="info"><div class="label"><span>RAM</span><span id="ram-usage-text">0 MB</span></div><div class="progress-bar"><div id="ram-progress"></div></div></div>
-                </div>
-            </div>
+        <div class="create-bot-footer hidden" id="create-bot-footer">
+            <button id="createNewBotBtn" class="btn-primary"><i class="fa-solid fa-plus"></i> Создать нового бота</button>
         </div>
-    </aside>
+    </main>
 </div>
 
-<div id="botModal" class="modal"><div class="modal-content"><span class="close">&times;</span><h2>Настройка бота</h2><input type="text" id="modal_username" placeholder="Никнейм бота" style="margin-bottom: 15px;"><input type="text" id="modal_server" placeholder="Адрес сервера (ip:port)" style="margin-bottom: 15px;"><input type="password" id="modal_password" placeholder="Пароль (необязательно)"><button id="createBotBtn" class="btn-primary" style="width: 100%; margin-top: 20px;"><i class="fa-solid fa-save"></i> Сохранить</button></div></div>
-<div id="settingsModal" class="modal"><div class="modal-content"><span class="close">&times;</span><h2 id="settingsModalTitle">Настройки плагина</h2><div id="settingsModalBody"></div><button id="saveSettingsBtn" class="btn-primary" style="width: 100%; margin-top: 15px;"><i class="fa-solid fa-floppy-disk"></i> Сохранить</button></div></div>
+<div id="botModal" class="modal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <h2 id="bot-modal-title">Настройка бота</h2>
+        <input type="text" id="modal_username" placeholder="Никнейм бота" style="margin-bottom: 15px;">
+        <input type="text" id="modal_server" placeholder="Адрес сервера (ip:port)" style="margin-bottom: 15px;">
+        <input type="text" id="modal_note" placeholder="Заметка (необязательно)" style="margin-bottom: 15px;" maxlength="70">
+        <button id="saveBotBtn" class="btn-primary" style="width: 100%; margin-top: 20px;"><i class="fa-solid fa-save"></i> Сохранить</button>
+    </div>
+</div>
+
+<div id="settingsModal" class="modal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <h2 id="settingsModalTitle">Настройки плагина</h2>
+        <div id="settingsModalBody"></div>
+        <button id="saveSettingsBtn" class="btn-primary" style="width: 100%; margin-top: 15px;"><i class="fa-solid fa-floppy-disk"></i> Сохранить</button>
+    </div>
+</div>
 
 <input type="file" id="importFileInput" accept=".json" style="display:none">
 <input type="file" id="pluginZipInput" accept=".zip" style="display:none">
 
 <script>
     document.addEventListener('DOMContentLoaded', () => {
-        let ws, botData = {}, availablePlugins = {};
+        let ws;
+        let allBots = {};
+        let availablePlugins = {};
+        let currentBotId = null;
 
         const elements = {
             botModal: document.getElementById("botModal"),
             settingsModal: document.getElementById("settingsModal"),
-            initialSetupOverlay: document.getElementById("initial-setup-overlay"),
-            initialCreateBtn: document.getElementById("initial-create-btn"),
+            createNewBotBtn: document.getElementById("createNewBotBtn"),
+            createBotFooter: document.getElementById("create-bot-footer"),
             startBotBtn: document.getElementById("startBot"),
             stopBotBtn: document.getElementById("stopBot"),
             restartBotBtn: document.getElementById("restartBot"),
@@ -395,30 +465,23 @@
             importFileInput: document.getElementById("importFileInput"),
             addMyPluginBtn: document.getElementById("addMyPluginBtn"),
             pluginZipInput: document.getElementById("pluginZipInput"),
-            createBotBtn: document.getElementById("createBotBtn"),
+            saveBotBtn: document.getElementById("saveBotBtn"),
             saveSettingsBtn: document.getElementById("saveSettingsBtn"),
             pages: document.querySelectorAll('.page'),
             dashboardPage: document.getElementById('dashboard-page'),
             botManagementPage: document.getElementById('bot-management-page'),
             logsDiv: document.getElementById("logs"),
             pluginsGrid: document.querySelector('.plugins-grid'),
-            sidebarBotNick: document.getElementById('sidebar-bot-nick'),
-            sidebarBotServer: document.getElementById('sidebar-bot-server'),
-            sidebarBotStatusDot: document.getElementById('sidebar-bot-status-dot'),
+            sidebarBotList: document.getElementById('sidebar-bot-list'),
+            botCount: document.getElementById('bot-count'),
             statsTotal: document.getElementById('stats-total'),
             statsRunning: document.getElementById('stats-running'),
             statsStopped: document.getElementById('stats-stopped'),
             botTableBody: document.getElementById('bot-table-body'),
-            resourceBotNick: document.getElementById('resource-bot-nick'),
-            cpuUsageText: document.getElementById('cpu-usage-text'),
-            cpuProgress: document.getElementById('cpu-progress'),
-            ramUsageText: document.getElementById('ram-usage-text'),
-            ramProgress: document.getElementById('ram-progress'),
             mainHeaderTitle: document.getElementById('main-header-title'),
             mainHeaderSubtitle: document.getElementById('main-header-subtitle'),
             headerActions: document.querySelector('.header-actions'),
             navDashboard: document.getElementById('nav-dashboard'),
-            sidebarBotCard: document.getElementById('sidebar-bot-card'),
             managementTabs: document.querySelectorAll('.bot-management-tabs .tab-btn'),
             tabContents: document.querySelectorAll('.tab-content'),
         };
@@ -427,85 +490,168 @@
             ws = new WebSocket("ws://localhost:3001");
             ws.onopen = () => logWithType("status", "WebSocket подключен.");
             ws.onmessage = (event) => { try { handleWsData(JSON.parse(event.data)); } catch(e) {} };
-            ws.onclose = () => { logWithType("status", "WebSocket закрыт. Переподключение..."); botData.botIsRunning = false; updateUI(); setTimeout(connect, 3000); };
-            ws.onerror = () => { logWithType("error", "Ошибка WebSocket."); botData.botIsRunning = false; updateUI(); };
+            ws.onclose = () => { logWithType("status", "WebSocket закрыт. Переподключение..."); setTimeout(connect, 3000); };
+            ws.onerror = () => { logWithType("error", "Ошибка WebSocket."); };
         }
 
         function handleWsData(data) {
             switch (data.type) {
-                case "botInfo": botData = { ...botData, ...data.data }; updateUI(); break;
-                case "availablePlugins": availablePlugins = data.data; renderPlugins(); break;
-                case "chat": logWithType("chat", data.message); break;
-                case "status": logWithType(data.message.includes("Ошибка") ? "error" : "status", data.message); break;
-                case "systemUsage": updateResourceMonitoring(data.cpu, data.ram); break;
+                case "allBots":
+                    allBots = data.data;
+                    updateUI();
+                    break;
+                case "availablePlugins":
+                    availablePlugins = data.data;
+                    if (currentBotId) renderPlugins();
+                    break;
+                case "chat":
+                    if (data.botId === currentBotId) logWithType("chat", data.message);
+                    break;
+                case "status":
+                    if (data.botId === currentBotId) logWithType(data.message.includes("Ошибка") ? "error" : "status", data.message);
+                    break;
             }
         }
 
         function sendWsMessage(type, payload = {}) {
-            if (ws && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ type, ...payload }));
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({ type, botId: currentBotId, ...payload }));
+            }
         }
 
-        function switchToView(viewName) {
+        function switchToView(viewName, botId = null) {
             elements.pages.forEach(p => p.classList.remove('active'));
             elements.headerActions.classList.add('hidden');
             elements.navDashboard.classList.remove('active');
 
             if (viewName === 'dashboard') {
+                currentBotId = null;
                 elements.dashboardPage.classList.add('active');
                 elements.mainHeaderTitle.textContent = "Дашборд";
                 elements.mainHeaderSubtitle.textContent = "Общая сводка по вашей системе BotMine";
                 elements.navDashboard.classList.add('active');
-            } else if (viewName === 'botManagement') {
+                elements.logsDiv.innerHTML = '';
+                elements.createBotFooter.classList.remove('hidden');
+                if (Object.keys(allBots).length >= 5) {
+                    elements.createBotFooter.classList.add('hidden');
+                }
+            } else if (viewName === 'botManagement' && botId) {
+                currentBotId = botId;
+                const bot = allBots[botId];
                 elements.botManagementPage.classList.add('active');
-                elements.mainHeaderTitle.textContent = botData.nick;
-                elements.mainHeaderSubtitle.textContent = botData.server;
+                elements.mainHeaderTitle.textContent = bot.nick;
+                elements.mainHeaderSubtitle.textContent = bot.server;
                 elements.headerActions.classList.remove('hidden');
+                elements.createBotFooter.classList.add('hidden');
+                updateBotControls();
+                renderPlugins();
             }
         }
 
         function updateUI() {
-            const botExists = botData.nick && botData.server;
-            const isRunning = botData.botIsRunning;
+            const botCount = Object.keys(allBots).length;
+            const runningCount = Object.values(allBots).filter(b => b.botIsRunning).length;
 
-            if (botExists) {
-                elements.initialSetupOverlay.classList.add('hidden');
-            } else {
-                elements.initialSetupOverlay.classList.remove('hidden');
-                switchToView('dashboard');
+            elements.botCount.textContent = botCount;
+            elements.statsTotal.textContent = botCount;
+            elements.statsRunning.textContent = runningCount;
+            elements.statsStopped.textContent = botCount - runningCount;
+
+            if (botCount >= 5) {
+                elements.createBotFooter.classList.add('hidden');
+            } else if (!currentBotId) {
+                elements.createBotFooter.classList.remove('hidden');
             }
 
-            elements.sidebarBotNick.textContent = botExists ? botData.nick : 'Бот не настроен';
-            elements.sidebarBotServer.textContent = botExists ? botData.server : 'Настройте для начала';
-            elements.resourceBotNick.textContent = botExists ? botData.nick : 'Нет бота';
-            elements.sidebarBotStatusDot.classList.toggle('online', isRunning);
-            elements.sidebarBotStatusDot.classList.toggle('offline', !isRunning);
+            renderSidebarBots();
+            renderDashboardTable();
 
-            elements.startBotBtn.disabled = isRunning || !botExists;
-            elements.stopBotBtn.disabled = !isRunning;
-            elements.restartBotBtn.disabled = !isRunning;
-            elements.exportBotBtn.disabled = !botExists;
-            elements.deleteBotBtn.disabled = !botExists;
-
-            elements.messageInput.disabled = !isRunning;
-            elements.sendMessageBtn.disabled = !isRunning;
-
-            elements.statsTotal.textContent = botExists ? '1' : '0';
-            elements.statsRunning.textContent = isRunning ? '1' : '0';
-            elements.statsStopped.textContent = botExists && !isRunning ? '1' : '0';
-            elements.botTableBody.innerHTML = botExists
-                ? `<tr><td>${botData.nick}</td><td><span class="status-tag ${isRunning ? 'running' : 'stopped'}">${isRunning ? 'Запущен' : 'Остановлен'}</span></td><td>...</td></tr>`
-                : `<tr><td colspan="3" style="text-align:center; color: var(--text-tertiary);">Настройте первого бота.</td></tr>`;
-
-            renderPlugins();
+            if (currentBotId) {
+                updateBotControls();
+                renderPlugins();
+            }
         }
 
-        function updateResourceMonitoring(cpu = 0, ram = 0) {
-            const maxRam = 512;
-            const ramPercent = Math.min(100, (ram / maxRam) * 100);
-            elements.cpuUsageText.textContent = `${cpu.toFixed(1)}%`;
-            elements.cpuProgress.style.width = `${Math.min(100, cpu)}%`;
-            elements.ramUsageText.textContent = `${ram.toFixed(1)} MB`;
-            elements.ramProgress.style.width = `${ramPercent}%`;
+        function renderSidebarBots() {
+            elements.sidebarBotList.innerHTML = '';
+
+            if (Object.keys(allBots).length === 0) {
+                elements.sidebarBotList.innerHTML = '<p style="text-align: center; color: var(--text-tertiary); padding: 20px;">Нет ботов</p>';
+                return;
+            }
+
+            Object.entries(allBots).forEach(([botId, bot], index) => {
+                const botItem = document.createElement('div');
+                botItem.className = 'bot-item';
+                if (botId === currentBotId) botItem.classList.add('active');
+                botItem.dataset.botId = botId;
+                botItem.style.animationDelay = `${index * 0.05}s`;
+                botItem.style.animation = 'slideIn 0.3s ease-out forwards';
+                botItem.innerHTML = `
+                    <div class="status-dot ${bot.botIsRunning ? 'online' : 'offline'}"></div>
+                    <div class="bot-info">
+                        <h4>${bot.nick}</h4>
+                        <p>${bot.server}</p>
+                        ${bot.note ? `<p class="bot-note">${bot.note}</p>` : ''}
+                    </div>
+                `;
+                botItem.onclick = () => switchToView('botManagement', botId);
+                elements.sidebarBotList.appendChild(botItem);
+            });
+        }
+
+        function renderDashboardTable() {
+            if (Object.keys(allBots).length === 0) {
+                elements.botTableBody.innerHTML = '<tr><td colspan="4" style="text-align:center; color: var(--text-tertiary);">Создайте первого бота для начала работы.</td></tr>';
+                return;
+            }
+
+            elements.botTableBody.innerHTML = '';
+            Object.entries(allBots).forEach(([botId, bot]) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${bot.nick}</td>
+                    <td>${bot.server}</td>
+                    <td><span class="status-tag ${bot.botIsRunning ? 'running' : 'stopped'}">${bot.botIsRunning ? 'Запущен' : 'Остановлен'}</span></td>
+                    <td>
+                        <button onclick="window.quickStart('${botId}')" ${bot.botIsRunning ? 'disabled' : ''} style="padding: 5px 10px; font-size: 12px;">
+                            <i class="fa-solid fa-play"></i>
+                        </button>
+                        <button onclick="window.quickStop('${botId}')" ${!bot.botIsRunning ? 'disabled' : ''} style="padding: 5px 10px; font-size: 12px;">
+                            <i class="fa-solid fa-stop"></i>
+                        </button>
+                        <button onclick="window.quickManage('${botId}')" style="padding: 5px 10px; font-size: 12px;">
+                            <i class="fa-solid fa-gear"></i>
+                        </button>
+                    </td>
+                `;
+                elements.botTableBody.appendChild(row);
+            });
+        }
+
+        window.quickStart = (botId) => {
+            currentBotId = botId;
+            sendWsMessage('startBot');
+        };
+        window.quickStop = (botId) => {
+            currentBotId = botId;
+            sendWsMessage('stopBot');
+        };
+        window.quickManage = (botId) => {
+            switchToView('botManagement', botId);
+        };
+
+        function updateBotControls() {
+            if (!currentBotId) return;
+
+            const bot = allBots[currentBotId];
+            const isRunning = bot?.botIsRunning || false;
+
+            elements.startBotBtn.disabled = isRunning;
+            elements.stopBotBtn.disabled = !isRunning;
+            elements.restartBotBtn.disabled = !isRunning;
+            elements.messageInput.disabled = !isRunning;
+            elements.sendMessageBtn.disabled = !isRunning;
         }
 
         function logWithType(type, msg) {
@@ -520,10 +666,13 @@
 
         function renderPlugins() {
             elements.pluginsGrid.innerHTML = '';
-            if (!availablePlugins || Object.keys(availablePlugins).length === 0) return;
+            if (!availablePlugins || Object.keys(availablePlugins).length === 0 || !currentBotId) return;
+
+            const currentBot = allBots[currentBotId];
+            if (!currentBot) return;
 
             Object.values(availablePlugins).forEach(plugin => {
-                const isActive = botData.activatedPlugins && botData.activatedPlugins.includes(plugin.name);
+                const isActive = currentBot.activatedPlugins && currentBot.activatedPlugins.includes(plugin.name);
                 elements.pluginsGrid.insertAdjacentHTML('beforeend', `
                 <div class="plugin-card ${isActive ? 'active' : ''}" data-plugin-name="${plugin.name}">
                     <i class="fa-solid fa-gear plugin-settings-btn"></i>
@@ -536,7 +685,8 @@
         }
 
         function openSettingsModal(pluginName) {
-            const settings = botData.pluginSettings?.[pluginName] || availablePlugins[pluginName]?.defaultSettings;
+            const bot = allBots[currentBotId];
+            const settings = bot.pluginSettings?.[pluginName] || availablePlugins[pluginName]?.defaultSettings;
             document.getElementById('settingsModalTitle').textContent = `Настройки: ${pluginName}`;
             const modalBody = document.getElementById('settingsModalBody');
             modalBody.innerHTML = '';
@@ -565,12 +715,13 @@
         elements.restartBotBtn.onclick = () => sendWsMessage('startBot');
 
         elements.exportBotBtn.onclick = () => {
-            window.location.href = '/export-bot-data';
+            window.location.href = `/export-bot-data?botId=${currentBotId}`;
         };
 
         elements.deleteBotBtn.onclick = () => {
-            if (confirm("Вы уверены, что хотите удалить этого бота? Это действие необратимо и удалит файл конфигурации.")) {
+            if (confirm("Вы уверены, что хотите удалить этого бота? Это действие необратимо.")) {
                 sendWsMessage('deleteBot');
+                switchToView('dashboard');
             }
         };
 
@@ -580,29 +731,51 @@
                 elements.messageInput.value = "";
             }
         };
+
         elements.messageInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' && !e.target.disabled) { e.preventDefault(); elements.sendMessageBtn.click(); }
+            if (e.key === 'Enter' && !e.target.disabled) {
+                e.preventDefault();
+                elements.sendMessageBtn.click();
+            }
         });
-        elements.createBotBtn.onclick = () => {
-            sendWsMessage('createBot', {
-                host: document.getElementById("modal_server").value,
-                username: document.getElementById("modal_username").value,
-                password: document.getElementById("modal_password").value
-            });
-            elements.botModal.classList.remove('active');
-        };
-        elements.openModalBtn.onclick = () => {
-            document.getElementById('modal_username').value = botData.nick || "";
-            document.getElementById('modal_server').value = botData.server || "";
-            document.getElementById('modal_password').value = botData.password || "";
-            elements.botModal.classList.add('active');
-        };
-        elements.initialCreateBtn.onclick = () => {
+
+        elements.createNewBotBtn.onclick = () => {
+            if (Object.keys(allBots).length >= 5) {
+                alert('Достигнут лимит: максимум 5 ботов');
+                return;
+            }
+            document.getElementById('bot-modal-title').textContent = 'Создать нового бота';
             document.getElementById('modal_username').value = "";
             document.getElementById('modal_server').value = "";
-            document.getElementById('modal_password').value = "";
+            document.getElementById('modal_note').value = "";
+            elements.saveBotBtn.onclick = () => {
+                sendWsMessage('createBot', {
+                    host: document.getElementById("modal_server").value,
+                    username: document.getElementById("modal_username").value,
+                    note: document.getElementById("modal_note").value
+                });
+                elements.botModal.classList.remove('active');
+            };
             elements.botModal.classList.add('active');
         };
+
+        elements.openModalBtn.onclick = () => {
+            const bot = allBots[currentBotId];
+            document.getElementById('bot-modal-title').textContent = 'Настройка бота';
+            document.getElementById('modal_username').value = bot.nick || "";
+            document.getElementById('modal_server').value = bot.server || "";
+            document.getElementById('modal_note').value = bot.note || "";
+            elements.saveBotBtn.onclick = () => {
+                sendWsMessage('updateBot', {
+                    host: document.getElementById("modal_server").value,
+                    username: document.getElementById("modal_username").value,
+                    note: document.getElementById("modal_note").value
+                });
+                elements.botModal.classList.remove('active');
+            };
+            elements.botModal.classList.add('active');
+        };
+
         elements.importBotDataBtn.onclick = () => elements.importFileInput.click();
         elements.importFileInput.addEventListener('change', e => {
             const file = e.target.files[0];
@@ -613,6 +786,7 @@
                 e.target.value = '';
             }
         });
+
         elements.addMyPluginBtn.onclick = () => elements.pluginZipInput.click();
         elements.pluginZipInput.addEventListener('change', e => {
             const file = e.target.files[0];
@@ -623,6 +797,7 @@
                 e.target.value = '';
             }
         });
+
         elements.pluginsGrid.addEventListener('click', e => {
             const card = e.target.closest('.plugin-card');
             if (!card) return;
@@ -632,7 +807,7 @@
         });
 
         elements.navDashboard.onclick = () => switchToView('dashboard');
-        elements.sidebarBotCard.onclick = () => { if (botData.nick) switchToView('botManagement'); };
+
         elements.managementTabs.forEach(tab => {
             tab.addEventListener('click', () => {
                 elements.managementTabs.forEach(t => t.classList.remove('active'));
@@ -647,8 +822,6 @@
         });
 
         connect();
-        updateUI();
-        updateResourceMonitoring();
     });
 </script>
 </body>

@@ -1,6 +1,6 @@
 {
   "name": "botmine",
-  "version": "1.4.7",
+  "version": "1.4.9",
   "description": "",
   "main": "server.js",
   "scripts": {
@@ -19,6 +19,7 @@
     "node-fetch": "^3.3.2",
     "patch-package": "^8.0.0",
     "pidusage": "^4.0.1",
+    "prismarine-chat": "^1.12.0",
     "ws": "^8.18.3"
   }
 }

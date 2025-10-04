@@ -1,0 +1,10 @@
+{
+  "name": "Auth",
+  "description": "Залогинеться/зарегается, если этого требует сервер.",
+  "defaultSettings": {
+    "password": {
+      "label": "Ваш пароль",
+      "value": ""
+    }
+  }
+}
